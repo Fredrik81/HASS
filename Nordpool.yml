@@ -53,6 +53,7 @@ card:
     offset: +0h
   series:
     - entity: sensor.nordpool_xxx
+      offset: '-15min'
       type: column
       float_precision: 2
       opacity: 1
@@ -85,7 +86,7 @@ card:
       extend_to: false
       name: Imorgon
       unit: Öre/kWh
-      offset: '-24h'
+      offset: '-24h15min'
       float_precision: 2
       opacity: 0.6
       stroke_width: 1

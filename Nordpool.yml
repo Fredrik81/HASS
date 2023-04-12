@@ -1,0 +1,149 @@
+type: custom:config-template-card
+variables:
+  getPriceState: |
+    temp => {
+      if (temp >= (states['sensor.nordpool_xxx'].attributes.average +
+            ((states['sensor.nordpool_xxx'].attributes.max -
+            states['sensor.nordpool_xxx'].attributes.average) / 2))) {
+          return "red";
+      } else if (temp >= (states['sensor.nordpool_xxx'].attributes.average -
+            states['sensor.nordpool_xxx'].attributes.min)) {
+          return "orange"
+      }
+      return "green";
+    }
+entities:
+  - sensor.nordpool_xxx
+card:
+  type: custom:apexcharts-card
+  now:
+    show: true
+    label: Nu
+    color: lightblue
+  experimental:
+    color_threshold: true
+  graph_span: '${states[''sensor.nordpool_xxx''].attributes.tomorrow_valid ? ''48h'' : ''24h''}'
+  apex_config:
+    chart:
+      height: 250px
+    legend:
+      showForSingleSeries: true
+    plotOptions:
+      bar:
+        borderRadius: 0
+    yaxis:
+      min: 0
+      decimalsInFloat: 2
+      tickAmount: 10
+      forceNiceScale: true
+    xaxis:
+      labels:
+        datetimeFormatter:
+          hour: HH
+  all_series_config:
+    show:
+      offset_in_name: false
+  header:
+    title: Dagens Elpriser
+    show: true
+    show_states: true
+    colorize_states: true
+  span:
+    start: day
+    offset: +0h
+  series:
+    - entity: sensor.nordpool_xxx
+      type: column
+      float_precision: 2
+      opacity: 1
+      stroke_width: 1
+      name: Idag
+      unit: Öre/kWh
+      extend_to: false
+      show:
+        in_header: false
+        legend_value: false
+        extremas: false
+      data_generator: |
+        return entity.attributes.today.map((price, index) => {
+          return [new Date().setHours(index,0,0), price];
+        });
+      color_threshold:
+        - value: 0
+          color: green
+        - value: >-
+            ${states['sensor.nordpool_xxx'].attributes.average -
+            states['sensor.nordpool_xxx'].attributes.min}
+          color: orange
+        - value: >-
+            ${states['sensor.nordpool_xxx'].attributes.average +
+            ((states['sensor.nordpool_xxx'].attributes.max -
+            states['sensor.nordpool_xxx'].attributes.average) / 2)}
+          color: red
+    - entity: sensor.nordpool_xxx
+      type: column
+      extend_to: false
+      name: Imorgon
+      unit: Öre/kWh
+      offset: '-24h'
+      float_precision: 2
+      opacity: 0.6
+      stroke_width: 1
+      show:
+        in_header: false
+        legend_value: false
+        extremas: false
+      data_generator: |
+        return entity.attributes.tomorrow.map((price, index) => {
+          return [new Date().setHours(index,0,0), price];
+        });
+      color_threshold:
+        - value: 0
+          color: green
+        - value: 50
+          color: orange
+        - value: 90
+          color: red
+    - entity: sensor.nordpool_xxx
+      attribute: min
+      type: column
+      color: green
+      float_precision: 2
+      stroke_width: 2
+      name: Dagens lägsta
+      group_by:
+        duration: 1d
+      show:
+        in_chart: false
+        legend_value: false
+    - entity: sensor.nordpool_xxx
+      attribute: average
+      type: column
+      color: orange
+      float_precision: 2
+      stroke_width: 2
+      name: Snittpris idag
+      group_by:
+        duration: 1d
+      show:
+        in_chart: false
+        legend_value: false
+    - entity: sensor.nordpool_xxx
+      attribute: max
+      type: column
+      color: red
+      float_precision: 2
+      stroke_width: 2
+      name: Dagens högsta
+      group_by:
+        duration: 1d
+      show:
+        in_chart: false
+        legend_value: false
+    - entity: sensor.nordpool_xxx
+      name: Just nu
+      color: "${getPriceState(states['sensor.nordpool_xxx'].attributes.current_price)}"
+      type: column
+      show:
+        in_chart: false
+      float_precision: 2

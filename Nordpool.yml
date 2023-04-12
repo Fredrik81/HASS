@@ -101,13 +101,13 @@ card:
         - value: 0
           color: green
         - value: >-
-            ${states['sensor.nordpool_teg47'].attributes.average -
-            states['sensor.nordpool_teg47'].attributes.min}
+            ${states['sensor.nordpool_xxx'].attributes.average -
+            states['sensor.nordpool_xxx'].attributes.min}
           color: orange
         - value: >-
-            ${states['sensor.nordpool_teg47'].attributes.average +
-            ((states['sensor.nordpool_teg47'].attributes.max -
-            states['sensor.nordpool_teg47'].attributes.average) / 2)}
+            ${states['sensor.nordpool_xxx'].attributes.average +
+            ((states['sensor.nordpool_xxx'].attributes.max -
+            states['sensor.nordpool_xxx'].attributes.average) / 2)}
           color: red
     - entity: sensor.nordpool_xxx
       attribute: min

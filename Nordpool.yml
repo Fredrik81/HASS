@@ -100,9 +100,14 @@ card:
       color_threshold:
         - value: 0
           color: green
-        - value: 50
+        - value: >-
+            ${states['sensor.nordpool_teg47'].attributes.average -
+            states['sensor.nordpool_teg47'].attributes.min}
           color: orange
-        - value: 90
+        - value: >-
+            ${states['sensor.nordpool_teg47'].attributes.average +
+            ((states['sensor.nordpool_teg47'].attributes.max -
+            states['sensor.nordpool_teg47'].attributes.average) / 2)}
           color: red
     - entity: sensor.nordpool_xxx
       attribute: min

@@ -2,12 +2,12 @@ type: custom:config-template-card
 variables:
   getPriceState: |
     temp => {
-      if (temp >= (states['sensor.nordpool_xxx'].attributes.average +
-            ((states['sensor.nordpool_xxx'].attributes.max -
-            states['sensor.nordpool_xxx'].attributes.average) / 2))) {
+      if (temp >= (states[this._config.entities[0]].attributes.average +
+            ((states[this._config.entities[0]].attributes.max -
+            states[this._config.entities[0]].attributes.average) / 2))) {
           return "red";
-      } else if (temp >= (states['sensor.nordpool_xxx'].attributes.average -
-            states['sensor.nordpool_xxx'].attributes.min)) {
+      } else if (temp >= (states[this._config.entities[0]].attributes.average -
+            states[this._config.entities[0]].attributes.min)) {
           return "orange"
       }
       return "green";
@@ -19,10 +19,9 @@ card:
   now:
     show: true
     label: Nu
-    color: lightblue
   experimental:
     color_threshold: true
-  graph_span: '${states[''sensor.nordpool_xxx''].attributes.tomorrow_valid ? ''48h'' : ''24h''}'
+  graph_span: '${states[this._config.entities[0]].attributes.tomorrow_valid ? ''48h'' : ''24h''}'
   apex_config:
     chart:
       height: 250px
@@ -31,6 +30,7 @@ card:
     plotOptions:
       bar:
         borderRadius: 0
+        columnWidth: 100%
     yaxis:
       min: 0
       decimalsInFloat: 2
@@ -52,8 +52,8 @@ card:
     start: day
     offset: +0h
   series:
-    - entity: sensor.nordpool_xxx
-      offset: '-15min'
+    - entity: ${this._config.entities[0]}
+      offset: '-30min'
       type: column
       float_precision: 2
       opacity: 1
@@ -73,20 +73,20 @@ card:
         - value: 0
           color: green
         - value: >-
-            ${states['sensor.nordpool_xxx'].attributes.average -
-            states['sensor.nordpool_xxx'].attributes.min}
+            ${states[this._config.entities[0]].attributes.average -
+            states[this._config.entities[0]].attributes.min}
           color: orange
         - value: >-
-            ${states['sensor.nordpool_xxx'].attributes.average +
-            ((states['sensor.nordpool_xxx'].attributes.max -
-            states['sensor.nordpool_xxx'].attributes.average) / 2)}
+            ${states[this._config.entities[0]].attributes.average +
+            ((states[this._config.entities[0]].attributes.max -
+            states[this._config.entities[0]].attributes.average) / 2)}
           color: red
-    - entity: sensor.nordpool_xxx
+    - entity: ${this._config.entities[0]}
       type: column
       extend_to: false
       name: Imorgon
       unit: Öre/kWh
-      offset: '-24h15min'
+      offset: '-24h30m'
       float_precision: 2
       opacity: 0.6
       stroke_width: 1
@@ -102,15 +102,15 @@ card:
         - value: 0
           color: green
         - value: >-
-            ${states['sensor.nordpool_xxx'].attributes.average -
-            states['sensor.nordpool_xxx'].attributes.min}
+            ${states[this._config.entities[0]].attributes.average -
+            states[this._config.entities[0]].attributes.min}
           color: orange
         - value: >-
-            ${states['sensor.nordpool_xxx'].attributes.average +
-            ((states['sensor.nordpool_xxx'].attributes.max -
-            states['sensor.nordpool_xxx'].attributes.average) / 2)}
+            ${states[this._config.entities[0]].attributes.average +
+            ((states[this._config.entities[0]].attributes.max -
+            states[this._config.entities[0]].attributes.average) / 2)}
           color: red
-    - entity: sensor.nordpool_xxx
+    - entity: ${this._config.entities[0]}
       attribute: min
       type: column
       color: green
@@ -122,7 +122,7 @@ card:
       show:
         in_chart: false
         legend_value: false
-    - entity: sensor.nordpool_xxx
+    - entity: ${this._config.entities[0]}
       attribute: average
       type: column
       color: orange
@@ -134,7 +134,7 @@ card:
       show:
         in_chart: false
         legend_value: false
-    - entity: sensor.nordpool_xxx
+    - entity: ${this._config.entities[0]}
       attribute: max
       type: column
       color: red
@@ -146,9 +146,10 @@ card:
       show:
         in_chart: false
         legend_value: false
-    - entity: sensor.nordpool_xxx
+    - entity: ${this._config.entities[0]}
       name: Just nu
-      color: "${getPriceState(states['sensor.nordpool_xxx'].attributes.current_price)}"
+      color: >-
+        ${getPriceState(states[this._config.entities[0]].attributes.current_price)}
       type: column
       show:
         in_chart: false

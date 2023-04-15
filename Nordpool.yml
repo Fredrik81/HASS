@@ -2,12 +2,9 @@ type: custom:config-template-card
 variables:
   getPriceState: |
     temp => {
-      if (temp >= (states[this._config.entities[0]].attributes.average +
-            ((states[this._config.entities[0]].attributes.max -
-            states[this._config.entities[0]].attributes.average) / 2))) {
+      if (temp >= ((states[this._config.entities[0]].attributes.max - states[this._config.entities[0]].attributes.average) * 0.4 + states[this._config.entities[0]].attributes.average)) {
           return "red";
-      } else if (temp >= (states[this._config.entities[0]].attributes.average -
-            states[this._config.entities[0]].attributes.min)) {
+      } else if (temp >= ((states[this._config.entities[0]].attributes.average - states[this._config.entities[0]].attributes.min) * 0.4 + states[this._config.entities[0]].attributes.min)) {
           return "orange"
       }
       return "green";
@@ -21,28 +18,37 @@ card:
     label: Nu
   experimental:
     color_threshold: true
-  graph_span: '${states[this._config.entities[0]].attributes.tomorrow_valid ? ''48h'' : ''24h''}'
+  graph_span: '${states[this._config.entities[0]].attributes.tomorrow_valid ? ''2d'' : ''1d''}'
   apex_config:
-    chart:
-      height: 250px
-    legend:
-      showForSingleSeries: true
+    dataLabels:
+      enabled: true
+      dropShadow:
+        enabled: true
     plotOptions:
       bar:
+        rangeBarOverlap: true
         borderRadius: 0
-        columnWidth: 100%
+        columnWidth: 70%
+    chart:
+      height: 300px
+    legend:
+      showForSingleSeries: false
     yaxis:
       min: 0
-      decimalsInFloat: 2
+      decimalsInFloat: 0
       tickAmount: 10
       forceNiceScale: true
     xaxis:
+      type: datetime
       labels:
         datetimeFormatter:
           hour: HH
+    markers:
+      size: 0
+      style: hollow
   all_series_config:
     show:
-      offset_in_name: false
+      offset_in_name: true
   header:
     title: Dagens Elpriser
     show: true
@@ -50,16 +56,12 @@ card:
     colorize_states: true
   span:
     start: day
-    offset: +0h
   series:
     - entity: ${this._config.entities[0]}
-      offset: '-30min'
       type: column
-      float_precision: 2
-      opacity: 1
-      stroke_width: 1
       name: Idag
       unit: Öre/kWh
+      float_precision: 0
       extend_to: false
       show:
         in_header: false
@@ -67,55 +69,52 @@ card:
         extremas: false
       data_generator: |
         return entity.attributes.today.map((price, index) => {
-          return [new Date().setHours(index,0,0), price];
+          return [new Date(Date.now()).setHours(index,0,0), price];
         });
       color_threshold:
         - value: 0
           color: green
         - value: >-
-            ${states[this._config.entities[0]].attributes.average -
-            states[this._config.entities[0]].attributes.min}
+            ${(states[this._config.entities[0]].attributes.average -
+            states[this._config.entities[0]].attributes.min) * 0.4 + states[this._config.entities[0]].attributes.min}
           color: orange
         - value: >-
-            ${states[this._config.entities[0]].attributes.average +
-            ((states[this._config.entities[0]].attributes.max -
-            states[this._config.entities[0]].attributes.average) / 2)}
+            ${(states[this._config.entities[0]].attributes.max -
+            states[this._config.entities[0]].attributes.average) * 0.4 + states[this._config.entities[0]].attributes.average}
           color: red
     - entity: ${this._config.entities[0]}
       type: column
-      extend_to: false
       name: Imorgon
       unit: Öre/kWh
-      offset: '-24h30m'
-      float_precision: 2
-      opacity: 0.6
-      stroke_width: 1
+      float_precision: 0
+      extend_to: false
       show:
+        in_chart: >-
+          ${states[this._config.entities[0]].attributes.tomorrow_valid ? true :
+          false}
         in_header: false
         legend_value: false
         extremas: false
       data_generator: |
         return entity.attributes.tomorrow.map((price, index) => {
-          return [new Date().setHours(index,0,0), price];
+          return [new Date(Date.now() + ( 3600 * 1000 * 24)).setHours(index,0,0), price];
         });
       color_threshold:
         - value: 0
           color: green
         - value: >-
-            ${states[this._config.entities[0]].attributes.average -
-            states[this._config.entities[0]].attributes.min}
+            ${(states[this._config.entities[0]].attributes.average -
+            states[this._config.entities[0]].attributes.min) * 0.4 + states[this._config.entities[0]].attributes.min}
           color: orange
         - value: >-
-            ${states[this._config.entities[0]].attributes.average +
-            ((states[this._config.entities[0]].attributes.max -
-            states[this._config.entities[0]].attributes.average) / 2)}
+            ${(states[this._config.entities[0]].attributes.max -
+            states[this._config.entities[0]].attributes.average) * 0.4 + states[this._config.entities[0]].attributes.average}
           color: red
     - entity: ${this._config.entities[0]}
       attribute: min
       type: column
       color: green
-      float_precision: 2
-      stroke_width: 2
+      float_precision: 0
       name: Dagens lägsta
       group_by:
         duration: 1d
@@ -126,8 +125,7 @@ card:
       attribute: average
       type: column
       color: orange
-      float_precision: 2
-      stroke_width: 2
+      float_precision: 0
       name: Snittpris idag
       group_by:
         duration: 1d
@@ -138,8 +136,7 @@ card:
       attribute: max
       type: column
       color: red
-      float_precision: 2
-      stroke_width: 2
+      float_precision: 0
       name: Dagens högsta
       group_by:
         duration: 1d
@@ -153,4 +150,4 @@ card:
       type: column
       show:
         in_chart: false
-      float_precision: 2
+      float_precision: 0

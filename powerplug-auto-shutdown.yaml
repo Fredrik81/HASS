@@ -102,6 +102,18 @@ blueprint:
 mode: restart
 max_exceeded: silent
 
+variables:
+  use_watt: !input use_watt_check
+  use_time: !input use_time_check
+  watt_threshold: !input watt_threshold
+  max_run_time: !input max_run_time
+  power_sensor: !input power_sensor
+  plug_switch: !input plug_switch
+  grace_period: !input grace_period
+  enable_notification: !input enable_notification
+  notify_service: !input notify_service
+  notify_message: !input notify_message
+
 trigger:
   - platform: state
     entity_id: !input plug_switch
@@ -121,18 +133,6 @@ condition:
         value_template: "{{ is_true(input.use_time_check) }}"
 
 action:
-  - variables:
-      use_watt: !input use_watt_check
-      use_time: !input use_time_check
-      watt_threshold: !input watt_threshold
-      max_run_time: !input max_run_time
-      power_sensor: !input power_sensor
-      plug_switch: !input plug_switch
-      grace_period: !input grace_period
-      enable_notification: !input enable_notification
-      notify_service: !input notify_service
-      notify_message: !input notify_message
-
   # Wait after plug turns ON
   - delay:
       seconds: "{{ grace_period }}"

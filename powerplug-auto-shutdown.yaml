@@ -2,10 +2,17 @@ blueprint:
   name: PowerPlug/Switch Auto Power Off Based on Watt or Timer
   description: >
     # ⚡ Smart Plug auto off
+    
     **Version: 1.0**
-    Monitor a power plug (with energy metering) and turn it off based on watt usage or max runtime. 
+
+    
+    Monitor a power plug (with energy metering) and turn it off based on watt usage or max runtime.
+    
     Optional notification when the plug is turned off. Includes configurable grace periods.
+    
     Flexible configuration with grace period and optional notification.
+
+    
     [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M4M4ZS0Y)
   domain: automation
   input:

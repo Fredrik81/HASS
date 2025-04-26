@@ -135,10 +135,10 @@ action:
     if:
       - condition: template
         value_template: >
-          {{ is_true(input.use_watt_check) and (states(input.power_sensor) | float(0) < input.watt_threshold | float(0)) }}
+          {{ use_watt and (states(power_sensor)|float(0) < watt_threshold) }}
     then:
       - delay:
-          seconds: "{{ input.grace_period_shutdown }}"
+          seconds: "{{ grace_period }}"
       - service: switch.turn_off
         target:
           entity_id: !input plug_switch

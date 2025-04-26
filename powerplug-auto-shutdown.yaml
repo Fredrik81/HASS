@@ -1,0 +1,186 @@
+blueprint:
+  name: PowerPlug/Switch Auto Power Off Based on Watt or Timer
+  description: >
+    # ⚡ Smart Plug auto off
+    **Version: 1.0**
+    Monitor a power plug (with energy metering) and turn it off based on watt usage or max runtime. 
+    Optional notification when the plug is turned off. Includes configurable grace periods.
+    Flexible configuration with grace period and optional notification.
+    [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M4M4ZS0Y)
+  domain: automation
+  input:
+    power_sensor:
+      name: Power Sensor
+      description: "The sensor measuring power usage (Watts)."
+      selector:
+        entity:
+          domain: sensor
+          device_class: power
+
+    plug_switch:
+      name: Plug Switch
+      description: "The switch entity controlling the plug."
+      selector:
+        entity:
+          domain: switch
+
+    use_watt_check:
+      name: Enable Wattage Threshold Check
+      description: "Turn off if watt usage drops below threshold?"
+      default: true
+      selector:
+        boolean: {}
+
+    watt_threshold:
+      name: Watt Threshold
+      description: "Watt level under which the plug will be turned off."
+      default: 5
+      selector:
+        number:
+          min: 0
+          max: 1000
+          unit_of_measurement: "W"
+          step: 1
+
+    use_time_check:
+      name: Enable Maximum Time Check
+      description: "Turn off after a maximum time running?"
+      default: true
+      selector:
+        boolean: {}
+
+    max_run_time:
+      name: Maximum Run Time
+      description: "Maximum allowed running time (minutes)."
+      default: 120
+      selector:
+        number:
+          min: 1
+          max: 1440
+          unit_of_measurement: "minutes"
+          step: 1
+
+    grace_period:
+      name: Grace Period (seconds)
+      description: "Wait time after plug ON and before shutdown confirmation."
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 300
+          unit_of_measurement: "seconds"
+          step: 1
+
+    enable_notification:
+      name: Enable Notification
+      description: "Send a notification when the plug is turned off?"
+      default: false
+      selector:
+        boolean: {}
+
+    notify_service:
+      name: Notification Service
+      description: "Pick your notify service (e.g., notify.mobile_app_yourphone)."
+      default: ""
+      selector:
+        text: {}
+
+    notify_message:
+      name: Notification Message
+      description: "Customize the notification message."
+      default: "The plug {{ plug_switch }} has been turned off automatically."
+      selector:
+        text: {}
+
+mode: restart
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    entity_id: !input plug_switch
+    to: "on"
+
+condition:
+  - condition: or
+    conditions:
+      - condition: template
+        value_template: "{{ is_true(input.use_watt_check) }}"
+      - condition: template
+        value_template: "{{ is_true(input.use_time_check) }}"
+
+action:
+  - variables:
+      use_watt: !input use_watt_check
+      use_time: !input use_time_check
+      watt_threshold: !input watt_threshold
+      max_run_time: !input max_run_time
+      power_sensor: !input power_sensor
+      plug_switch: !input plug_switch
+      grace_period: !input grace_period
+      enable_notification: !input enable_notification
+      notify_service: !input notify_service
+      notify_message: !input notify_message
+
+  # Wait after plug turns ON
+  - delay:
+      seconds: "{{ grace_period }}"
+
+  # Start monitoring
+  - wait_for_trigger:
+      - platform: template
+        value_template: >
+          {% if use_watt %}
+            {{ states(power_sensor)|float(0) < watt_threshold }}
+          {% else %}
+            false
+          {% endif %}
+      - platform: state
+        entity_id: !input plug_switch
+        to: "off"
+      - platform: template
+        value_template: >
+          {% if use_time %}
+            {{ (as_timestamp(now()) - as_timestamp(states[plug_switch].last_changed)) > (max_run_time | int * 60) }}
+          {% else %}
+            false
+          {% endif %}
+    continue_on_timeout: true
+
+  # Grace period before final shutdown
+  - delay:
+      seconds: "{{ grace_period }}"
+
+  # Confirm shutdown condition
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: !input plug_switch
+            state: "on"
+          - condition: or
+            conditions:
+              - condition: template
+                value_template: >
+                  {% if use_watt %}
+                    {{ states(power_sensor)|float(0) < watt_threshold }}
+                  {% else %}
+                    false
+                  {% endif %}
+              - condition: template
+                value_template: >
+                  {% if use_time %}
+                    {{ (as_timestamp(now()) - as_timestamp(states[plug_switch].last_changed)) > (max_run_time | int * 60) }}
+                  {% else %}
+                    false
+                  {% endif %}
+        sequence:
+          - service: switch.turn_off
+            target:
+              entity_id: !input plug_switch
+
+          - if:
+              - condition: template
+                value_template: "{{ enable_notification and notify_service != '' }}"
+            then:
+              - service: "{{ notify_service }}"
+                data:
+                  message: "{{ notify_message }}"

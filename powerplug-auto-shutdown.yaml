@@ -3,7 +3,7 @@ blueprint:
   description: >
     # ⚡ Smart Plug auto off
     
-    **Version: 1.1**
+    **Version: 1.2**
 
     
     Monitor a power plug (with energy metering) and turn it off based on watt usage or max runtime.
@@ -130,6 +130,26 @@ action:
   # Wait after plug turns ON
   - delay:
       seconds: "{{ grace_period }}"
+
+  - alias: Immediate check after grace period
+    if:
+      - condition: template
+        value_template: >
+          {{ is_true(input.use_watt_check) and (states(input.power_sensor) | float(0) < input.watt_threshold | float(0)) }}
+    then:
+      - delay:
+          seconds: "{{ input.grace_period_shutdown }}"
+      - service: switch.turn_off
+        target:
+          entity_id: !input plug_switch
+      - if:
+          - condition: template
+            value_template: "{{ enable_notification and notify_service != '' }}"
+        then:
+          - service: "{{ notify_service }}"
+            data:
+              message: "{{ notify_message }}"
+      - stop: "Plug was already under watt threshold after startup grace period."
 
   # Start monitoring
   - wait_for_trigger:

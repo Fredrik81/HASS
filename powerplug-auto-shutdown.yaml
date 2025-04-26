@@ -17,7 +17,7 @@ blueprint:
   domain: automation
   input:
     power_sensor:
-      name: Power Sensor
+      name: Power Sensor Entity
       description: "The sensor measuring power usage (Watts)."
       selector:
         entity:
@@ -25,7 +25,7 @@ blueprint:
           device_class: power
 
     plug_switch:
-      name: Plug Switch
+      name: Plug or Switch
       description: "The switch entity controlling the plug."
       selector:
         entity:
@@ -106,8 +106,13 @@ trigger:
   - platform: state
     entity_id: !input plug_switch
     to: "on"
+  - platform: homeassistant
+    event: start
 
 condition:
+  - condition: state
+    entity_id: !input plug_switch
+    state: "on"
   - condition: or
     conditions:
       - condition: template

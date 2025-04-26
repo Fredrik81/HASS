@@ -3,7 +3,7 @@ blueprint:
   description: >
     # ⚡ Smart Plug auto off
     
-    **Version: 1.0**
+    **Version: 1.1**
 
     
     Monitor a power plug (with energy metering) and turn it off based on watt usage or max runtime.
@@ -125,12 +125,6 @@ condition:
   - condition: state
     entity_id: !input plug_switch
     state: "on"
-  - condition: or
-    conditions:
-      - condition: template
-        value_template: "{{ is_true(input.use_watt_check) }}"
-      - condition: template
-        value_template: "{{ is_true(input.use_time_check) }}"
 
 action:
   # Wait after plug turns ON

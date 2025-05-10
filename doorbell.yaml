@@ -1,0 +1,84 @@
+blueprint:
+  name: Multi-Effect Alert with Presence-Aware Toggles
+  input:
+    # Global presence config
+    presence_zone:
+      name: Presence Zone
+      default: zone.home
+      selector:
+        entity:
+          domain: zone
+
+    # STOP condition
+    stop_entities:
+      name: Stop If Any of These Entities Change
+      selector:
+        target:
+          entity:
+            domain: binary_sensor
+
+    # Lights section
+    enable_lights:
+      name: Enable Light Flashing
+      default: true
+      selector:
+        boolean: {}
+    lights_only_if_away:
+      name: Flash Lights Only If No One Is in Zone
+      default: false
+      selector:
+        boolean: {}
+    alert_lights:
+      name: Lights to Blink
+      selector:
+        target:
+          entity:
+            domain: light
+    blink_color:
+      name: Blink Color
+      selector:
+        color_rgb: {}
+
+    # Sound section
+    enable_sound:
+      name: Enable Sound Playback
+      default: true
+      selector:
+        boolean: {}
+    sound_only_if_away:
+      name: Play Sound Only If No One Is in Zone
+      default: false
+      selector:
+        boolean: {}
+    media_players:
+      name: Media Players
+      selector:
+        target:
+          entity:
+            domain: media_player
+    media_url:
+      name: Media File URL
+      selector:
+        text: {}
+
+    # Notifications
+    enable_notification:
+      name: Send Notification
+      default: true
+      selector:
+        boolean: {}
+    notification_only_if_away:
+      name: Notify Only If No One Is in Zone
+      default: false
+      selector:
+        boolean: {}
+    notify_targets:
+      name: Devices to Notify
+      selector:
+        target:
+          entity:
+            domain: notify
+    notification_message:
+      name: Message
+      selector:
+        text: {}

@@ -1,5 +1,10 @@
 blueprint:
-  name: Multi-Effect Alert with Presence-Aware Toggles
+  name: Doorbell Automation
+  description: >
+    This blueprint allows you to set up a doorbell automation that can flash lights,
+    play sounds, and send notifications when a doorbell is pressed. You can customize
+    the behavior based on whether anyone is home or not.
+  domain: automation
   input:
     # Global presence config
     presence_zone:

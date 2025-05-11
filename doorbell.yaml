@@ -2,8 +2,8 @@ blueprint:
   name: Doorbell Automation
   description: >
     This blueprint allows you to set up a doorbell automation that can flash lights,
-    play sounds, and send notifications when a doorbell is pressed. You can customize
-    the behavior based on whether anyone is home or not.
+    play sounds, send notifications, and execute custom actions when a doorbell is pressed.
+    You can customize the behavior based on whether anyone is home or not.
   domain: automation
   input:
     # Global presence config
@@ -20,8 +20,10 @@ blueprint:
       selector:
         target:
           entity:
-            domain: binary_sensor
-      description: "Select entities that will stop the automation when their state changes."
+            domain:
+              - binary_sensor
+              - lock
+      description: "Select entities (e.g., binary sensors or locks) that will stop the automation when their state changes."
 
     # Lights section
     enable_lights:
@@ -81,12 +83,14 @@ blueprint:
 
     # Notifications
     enable_notification:
-      name: Send Notification
+      name: Enable Notifications
       default: true
       selector:
         boolean: {}
+      description: "Enable or disable sending notifications when the doorbell is pressed."
+
     notification_presence_condition:
-      name: Notify Presence Condition
+      name: Notification Presence Condition
       default: always
       selector:
         select:
@@ -94,14 +98,48 @@ blueprint:
             - always
             - only_if_someone_in_zone
             - only_if_no_one_in_zone
+      description: "Specify when notifications should be sent."
+
     notify_targets:
-      name: Devices to Notify
+      name: Notification Targets
       selector:
         target:
           entity:
             domain: notify
-      default: []  # Default to an empty list if no devices are selected
-    notification_message:
-      name: Message
+      description: "Select one or more notification services to send the notification to."
+
+    notification_title:
+      name: Notification Title
+      default: "Someone at the door!"
       selector:
         text: {}
+      description: "Specify the title of the notification."
+
+    notification_message:
+      name: Notification Message
+      default: "Someone pressed the doorbell."
+      selector:
+        text: {}
+      description: "Specify the message to send in the notification."
+
+    # Custom Actions
+    enable_custom_actions:
+      name: Enable Custom Actions
+      default: false
+      selector:
+        boolean: {}
+      description: "Enable or disable custom actions when the doorbell is pressed."
+    custom_actions_presence_condition:
+      name: Custom Actions Presence Condition
+      default: always
+      selector:
+        select:
+          options:
+            - always
+            - only_if_someone_in_zone
+            - only_if_no_one_in_zone
+    custom_actions:
+      name: Custom Actions
+      selector:
+        action: {}
+      description: "Define one or more custom actions to execute when the doorbell is pressed."

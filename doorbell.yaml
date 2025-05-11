@@ -6,6 +6,17 @@ blueprint:
     You can customize the behavior based on whether anyone is home or not.
   domain: automation
   input:
+    # Doorbell Button
+    doorbell_button:
+      name: Doorbell Button
+      selector:
+        entity:
+          domain:
+            - binary_sensor
+            - sensor
+            - device_trigger
+      description: "Select the entity that represents the doorbell button. This can be any button-type device, such as a Sonoff SNZB-01P."
+
     # Global presence config
     presence_zone:
       name: Presence Zone
@@ -24,17 +35,6 @@ blueprint:
               - binary_sensor
               - lock
       description: "Select entities (e.g., binary sensors or locks) that will stop the automation when their state changes."
-
-    # Doorbell Button
-    doorbell_button:
-      name: Doorbell Button
-      selector:
-        entity:
-          domain:
-            - binary_sensor
-            - sensor
-            - device_trigger
-      description: "Select the entity that represents the doorbell button. This can be any button-type device, such as a Sonoff SNZB-01P."
 
     # Lights section
     enable_lights:

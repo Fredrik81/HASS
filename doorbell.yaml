@@ -216,6 +216,10 @@ variables:
   enable_custom_actions: !input enable_custom_actions
   custom_actions_presence_condition: !input custom_actions_presence_condition
   custom_actions: !input custom_actions
+  zb_integration: !input zb_integration
+  zb_button_device: !input zb_button_device
+  zb_mqtt_topic: !input zb_mqtt_topic
+  zb_button_command: !input zb_button_command
 
 trigger:
   # Default doorbell button trigger
@@ -238,9 +242,9 @@ condition:
       value_template: "{{ trigger.id == 'generic_button' }}"  # skip condition if triggered by door
     - condition: template
       value_template: >
-        {% set is_zha = (inputs.zb_integration == 'zha') %}
-        {% set is_z2m = (inputs.zb_integration == 'zigbee2mqtt') %}
-        {% set cmd = inputs.zb_button_command %}
+        {% set is_zha = (zb_integration == 'zha') %}
+        {% set is_z2m = (zb_integration == 'zigbee2mqtt') %}
+        {% set cmd = zb_button_command %}
         {% if is_zha %}
           {{ (cmd == 'any') or (trigger.event.data.device_id == inputs.zb_button_device and trigger.event.data.command == cmd) }}
         {% elif is_z2m %}
@@ -254,7 +258,7 @@ action:
   - condition: template
     value_template: >
       {% if stop_entities | length > 0 %}
-      {{ not (trigger.entity_id in stop_entities) }}
+      {{ not (trigger.entity_id in variables.stop_entities) }}
       {% else %}
       true
       {% endif %}

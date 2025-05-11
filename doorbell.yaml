@@ -201,8 +201,9 @@ trigger:
     entity_id: !input doorbell_button
 
   # Custom trigger (if defined)
+  {% if custom_trigger is defined and custom_trigger %}
   - <<: !input custom_trigger
-    # The `<<:` syntax merges the custom trigger object into the trigger list
+  {% endif %}
 
 condition: []
 

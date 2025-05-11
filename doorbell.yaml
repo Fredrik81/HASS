@@ -125,7 +125,7 @@ action:
           - condition: template
             value_template: "{{ iif(is_boolean(input.send_notification), input.send_notification, false) }}"
           - condition: template
-             value_template: "{{ notify_zone_condition == 'always' or (notify_zone_condition == 'in' and someone_in_zone) or (notify_zone_condition == 'out' and not someone_in_zone) }}"
+            value_template: "{{ notify_zone_condition == 'always' or (notify_zone_condition == 'in' and someone_in_zone) or (notify_zone_condition == 'out' and not someone_in_zone) }}"
         sequence:
           - service: notify.{{ iif(input.notify_target is string, input.notify_target.split('.')[-1], 'mobile_app') }}
             data:

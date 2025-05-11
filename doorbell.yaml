@@ -224,8 +224,13 @@ variables:
   zb_doorbell_button: !input zb_doorbell_button
   zb_doorbell_command: !input zb_doorbell_command
 
-trigger:
-  # Default doorbell button trigger
+triggers:
+  - domain: mqtt
+    device_id: zb_doorbell_button
+    type: action
+    subtype: single
+    trigger: device
+
   - platform: state
     entity_id: !input doorbell_button
     id: generic_button
@@ -233,10 +238,6 @@ trigger:
   - platform: event
     event_type: zb_zha_event
     id: zb_doorbell_button
-
-  - platform: mqtt
-    topic: !input zb_doorbell_button
-    id: z2m_button
 
 condition:
   - condition: or

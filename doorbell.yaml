@@ -36,14 +36,18 @@ blueprint:
 
     zb_button_device:
       name: Zigbee Button Device (ZHA)
+      description: Select doorbell device/button.
       selector:
         device:
           integration: zha
 
     zb_mqtt_topic:
-      name: MQTT Topic (Zigbee2MQTT)
+      name: MQTT Button Device (Zigbee2mqtt)
+      description: Select doorbell device/button.
       selector:
-        text:
+        device:
+          filter:
+            - integration: mqtt  # optional
 
     zb_button_command:
       name: Button Command

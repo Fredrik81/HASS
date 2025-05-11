@@ -226,7 +226,7 @@ variables:
 
 triggers:
   - domain: mqtt
-    device_id: zb_doorbell_button
+    device_id: !input zb_doorbell_button
     type: action
     subtype: single
     trigger: device
@@ -237,7 +237,7 @@ triggers:
 
   - platform: event
     event_type: zb_zha_event
-    id: zb_doorbell_button
+    id: !input zb_doorbell_button
 
 condition:
   - condition: or

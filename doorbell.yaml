@@ -221,26 +221,33 @@ trigger:
   # Default doorbell button trigger
   - platform: state
     entity_id: !input doorbell_button
+    id: generic_button
 
   - platform: event
     event_type: zb_zha_event
+    id: zha_button
 
   - platform: mqtt
     topic: !input zb_mqtt_topic
+    id: z2m_button
 
 condition:
-  - condition: template
-    value_template: >
-      {% set is_zha = (inputs.zb_integration == 'zha') %}
-      {% set is_z2m = (inputs.zb_integration == 'zigbee2mqtt') %}
-      {% set cmd = inputs.zb_button_command %}
-      {% if is_zha %}
-        {{ (cmd == 'any') or (trigger.event.data.device_id == inputs.zb_button_device and trigger.event.data.command == cmd) }}
-      {% elif is_z2m %}
-        {{ (cmd == 'any') or (trigger.payload_json.action == cmd) }}
-      {% else %}
-        false
-      {% endif %}
+  - condition: or
+    conditions:
+    - condition: template
+        value_template: "{{ trigger.id == 'generic_button' }}"  # skip condition if triggered by door
+    - condition: template
+      value_template: >
+        {% set is_zha = (inputs.zb_integration == 'zha') %}
+        {% set is_z2m = (inputs.zb_integration == 'zigbee2mqtt') %}
+        {% set cmd = inputs.zb_button_command %}
+        {% if is_zha %}
+          {{ (cmd == 'any') or (trigger.event.data.device_id == inputs.zb_button_device and trigger.event.data.command == cmd) }}
+        {% elif is_z2m %}
+          {{ (cmd == 'any') or (trigger.payload_json.action == cmd) }}
+        {% else %}
+          false
+        {% endif %}
 
 action:
   # Stop condition: If any of the stop entities change state, stop the automation

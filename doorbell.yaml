@@ -28,6 +28,7 @@ blueprint:
       selector:
         entity:
           domain: zone
+      default: zone.home
     media_zone_condition:
       name: When to play media
       description: Choose when to play media based on zone presence.
@@ -89,6 +90,7 @@ variables:
   zone_persons: "{{ state_attr(zone, 'persons') if state_attr(zone, 'persons') is defined else [] }}"
   someone_in_zone: >
     {{ expand('group.all_persons') | selectattr('state', 'eq', 'home') | selectattr('attributes.latitude', 'eq', state_attr(zone, 'latitude')) | selectattr('attributes.longitude', 'eq', state_attr(zone, 'longitude')) | list | count > 0 }}
+  media_url: !input media_url
 
 action:
   - choose:
@@ -104,7 +106,7 @@ action:
         sequence:
           - service: media_player.play_media
             data:
-              media_content_id: !input media_url
+              media_content_id: media_url
               media_content_type: audio/mpeg
             target: !input media_players
 

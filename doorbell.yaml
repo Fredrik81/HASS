@@ -25,6 +25,17 @@ blueprint:
               - lock
       description: "Select entities (e.g., binary sensors or locks) that will stop the automation when their state changes."
 
+    # Doorbell Button
+    doorbell_button:
+      name: Doorbell Button
+      selector:
+        entity:
+          domain:
+            - binary_sensor
+            - sensor
+            - device_trigger
+      description: "Select the entity that represents the doorbell button. This can be any button-type device, such as a Sonoff SNZB-01P."
+
     # Lights section
     enable_lights:
       name: Enable Light Flashing
@@ -147,7 +158,7 @@ blueprint:
       description: "Define one or more custom actions to execute when the doorbell is pressed."
 
 variables:
-  notify_targets: !input notify_targets
+  doorbell_button: !input doorbell_button
   presence_zone: !input presence_zone
   stop_entities: !input stop_entities
   enable_lights: !input enable_lights
@@ -166,3 +177,107 @@ variables:
   enable_custom_actions: !input enable_custom_actions
   custom_actions_presence_condition: !input custom_actions_presence_condition
   custom_actions: !input custom_actions
+
+trigger:
+  - platform: state
+    entity_id: !input doorbell_button
+    to: "on"  # Adjust this based on the state your doorbell button sends when pressed
+
+condition: []
+
+action:
+  # Stop condition: If any of the stop entities change state, stop the automation
+  - condition: template
+    value_template: >
+      {% if stop_entities | length > 0 %}
+      {{ not (trigger.entity_id in stop_entities) }}
+      {% else %}
+      true
+      {% endif %}
+
+  # Flash lights if enabled and presence condition is met
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: >
+              {% if lights_presence_condition == "always" %}
+              true
+              {% elif lights_presence_condition == "only_if_someone_in_zone" %}
+              {{ is_state(presence_zone, "home") }}
+              {% elif lights_presence_condition == "only_if_no_one_in_zone" %}
+              {{ not is_state(presence_zone, "home") }}
+              {% else %}
+              false
+              {% endif %}
+          - condition: template
+            value_template: "{{ enable_lights }}"
+        sequence:
+          - service: light.turn_on
+            target: !input alert_lights
+            data:
+              flash: short
+              rgb_color: !input blink_color
+
+  # Play sound if enabled and presence condition is met
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: >
+              {% if sound_presence_condition == "always" %}
+              true
+              {% elif sound_presence_condition == "only_if_someone_in_zone" %}
+              {{ is_state(presence_zone, "home") }}
+              {% elif sound_presence_condition == "only_if_no_one_in_zone" %}
+              {{ not is_state(presence_zone, "home") }}
+              {% else %}
+              false
+              {% endif %}
+          - condition: template
+            value_template: "{{ enable_sound }}"
+        sequence:
+          - service: media_player.play_media
+            target: !input media_players
+            data:
+              media_content_id: !input media_url
+              media_content_type: music
+
+  # Send notification if enabled and presence condition is met
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: >
+              {% if notification_presence_condition == "always" %}
+              true
+              {% elif notification_presence_condition == "only_if_someone_in_zone" %}
+              {{ is_state(presence_zone, "home") }}
+              {% elif notification_presence_condition == "only_if_no_one_in_zone" %}
+              {{ not is_state(presence_zone, "home") }}
+              {% else %}
+              false
+              {% endif %}
+          - condition: template
+            value_template: "{{ enable_notification }}"
+        sequence:
+          - service: notify.notify
+            target: !input notify_targets
+            data:
+              title: !input notification_title
+              message: !input notification_message
+
+  # Execute custom actions if enabled and presence condition is met
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: >
+              {% if custom_actions_presence_condition == "always" %}
+              true
+              {% elif custom_actions_presence_condition == "only_if_someone_in_zone" %}
+              {{ is_state(presence_zone, "home") }}
+              {% elif custom_actions_presence_condition == "only_if_no_one_in_zone" %}
+              {{ not is_state(presence_zone, "home") }}
+              {% else %}
+              false
+              {% endif %}
+          - condition: template
+            value_template: "{{ enable_custom_actions }}"
+        sequence: !input custom_actions

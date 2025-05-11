@@ -87,13 +87,16 @@ blueprint:
 
 variables:
   zone: !input zone_entity
+  zone_name: "{{ state_attr(zone, 'friendly_name') | lower }}"
+  someone_in_zone: >
+    {{ expand(states.person) | selectattr('state', 'defined') |
+       map(attribute='state') | map('lower') |
+       select('equalto', zone_name) | list | count > 0 }}
   media_condition: !input media_zone_condition
   notify_condition: !input notify_zone_condition
   send_notification: !input send_notification
   notify_target: !input notify_target
   media_url: !input media_url
-  someone_in_zone: >
-    {{ expand('group.all_persons') | selectattr('state', 'eq', zone) | list | count > 0 }}
   media_players: !input media_players
 
 triggers:

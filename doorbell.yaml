@@ -235,7 +235,7 @@ condition:
   - condition: or
     conditions:
     - condition: template
-        value_template: "{{ trigger.id == 'generic_button' }}"  # skip condition if triggered by door
+      value_template: "{{ trigger.id == 'generic_button' }}"  # skip condition if triggered by door
     - condition: template
       value_template: >
         {% set is_zha = (inputs.zb_integration == 'zha') %}

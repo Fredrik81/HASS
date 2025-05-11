@@ -98,6 +98,15 @@ variables:
        selectattr('attributes.longitude', 'eq', state_attr(zone, 'longitude')) | list | count > 0 }}
   media_players: !input media_players
 
+triggers:
+  - platform: device
+    device_id: !input button_device
+    domain: mqtt
+    type: action
+    subtype: single
+
+condition: []
+
 action:
   - choose:
       - conditions:

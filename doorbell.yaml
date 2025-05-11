@@ -222,7 +222,7 @@ variables:
   custom_actions: !input custom_actions
   zb_integration: !input zb_integration
   zb_doorbell_button: !input zb_doorbell_button
-  zb_doorbell_command: !input zb_button_command
+  zb_doorbell_command: !input zb_doorbell_command
 
 trigger:
   # Default doorbell button trigger
@@ -330,7 +330,7 @@ action:
             value_template: "{{ enable_notification }}"
         sequence:
           - service: notify.notify
-            target: !input notify_targets
+            target: "{{ notify_targets | default([]) }}"
             data:
               title: !input notification_title
               message: !input notification_message

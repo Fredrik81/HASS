@@ -47,7 +47,6 @@ blueprint:
             - integration: zha
             - integration: mqtt
 
-
     zb_doorbell_command:
       name: Button Command
       default: any
@@ -58,6 +57,13 @@ blueprint:
             - single
             - double
             - hold
+
+    zb_mqtt_topic:
+      name: MQTT Topic
+      selector:
+        text: {}
+      description: "Enter the MQTT topic for the doorbell button."
+      default: "zigbee2mqtt"
 
     # Global presence config
     presence_zone:
@@ -223,6 +229,7 @@ variables:
   zb_integration: !input zb_integration
   zb_doorbell_button: !input zb_doorbell_button
   zb_doorbell_command: !input zb_doorbell_command
+  zb_mqtt_topic: !input zb_mqtt_topic
 
 triggers:
   - domain: mqtt
@@ -234,6 +241,7 @@ triggers:
   - platform: state
     entity_id: !input doorbell_button
     id: generic_button
+    condition: "{{ doorbell_button != '' }}"
 
   - platform: event
     event_type: zb_zha_event

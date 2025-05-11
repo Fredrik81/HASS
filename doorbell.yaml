@@ -24,30 +24,29 @@ blueprint:
             - sensor
             - device_trigger
       description: "Select the entity that represents the doorbell button. This can be any button-type device."
+      default: ""
 
     zb_integration:
       name: Zigbee Integration
-      default: zha
       selector:
         select:
           options:
             - zha
             - zigbee2mqtt
+            - none
+      description: "Select the Zigbee integration used for the doorbell button. Choose 'none' if not applicable."
+      default: none
 
-    zb_button_device:
-      name: Zigbee Button Device (ZHA)
+    zb_doorbell_button:
+      name: Zigbee Device
       description: Select doorbell device/button.
-      selector:
-        device:
-          integration: zha
-
-    zb_mqtt_topic:
-      name: MQTT Button Device (Zigbee2mqtt)
-      description: Select doorbell device/button.
+      default: ""
       selector:
         device:
           filter:
-            - integration: mqtt  # optional
+            - integration: zha
+            - integration: mqtt
+
 
     zb_button_command:
       name: Button Command
@@ -105,7 +104,8 @@ blueprint:
       name: Blink Color
       selector:
         color_rgb: {}
-      description: "Optional: Set the color for blinking lights. Leave empty for default behavior."
+      default: [255, 255, 255]  # Default to white
+      description: "Optional: Set the color for blinking lights. Defaults to white if not specified."
 
     # Sound section
     enable_sound:
@@ -233,10 +233,10 @@ trigger:
 
   - platform: event
     event_type: zb_zha_event
-    id: zha_button
+    id: zb_doorbell_button
 
   - platform: mqtt
-    topic: !input zb_mqtt_topic
+    topic: !input zb_doorbell_button
     id: z2m_button
 
 condition:

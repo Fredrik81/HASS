@@ -48,7 +48,7 @@ blueprint:
             - integration: mqtt
 
 
-    zb_button_command:
+    zb_doorbell_command:
       name: Button Command
       default: any
       selector:
@@ -221,9 +221,8 @@ variables:
   custom_actions_presence_condition: !input custom_actions_presence_condition
   custom_actions: !input custom_actions
   zb_integration: !input zb_integration
-  zb_button_device: !input zb_button_device
-  zb_mqtt_topic: !input zb_mqtt_topic
-  zb_button_command: !input zb_button_command
+  zb_doorbell_button: !input zb_doorbell_button
+  zb_doorbell_command: !input zb_button_command
 
 trigger:
   # Default doorbell button trigger
@@ -248,9 +247,9 @@ condition:
       value_template: >
         {% set is_zha = (zb_integration == 'zha') %}
         {% set is_z2m = (zb_integration == 'zigbee2mqtt') %}
-        {% set cmd = zb_button_command %}
+        {% set cmd = zb_doorbell_command %}
         {% if is_zha %}
-          {{ (cmd == 'any') or (trigger.event.data.device_id == inputs.zb_button_device and trigger.event.data.command == cmd) }}
+          {{ (cmd == 'any') or (trigger.event.data.device_id == inputs.zb_doorbell_button and trigger.event.data.command == cmd) }}
         {% elif is_z2m %}
           {{ (cmd == 'any') or (trigger.payload_json.action == cmd) }}
         {% else %}

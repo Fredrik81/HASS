@@ -13,333 +13,59 @@ blueprint:
 
     [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M4M4ZS0Y)
   domain: automation
+  source_url: https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell.yaml
   input:
-    zb_integration:
-      name: Zigbee Integration
-      selector:
-        select:
-          options:
-            - zha
-            - zigbee2mqtt
-            - none
-      description: "Select the Zigbee integration used for the doorbell button. Choose 'none' if not applicable."
-      default: none
-
-    zb_doorbell_button:
-      name: Zigbee Device
-      description: Select doorbell device/button.
-      default: ""
+    button_device:
+      name: Doorbell Button (MQTT)
+      description: Select the Zigbee2MQTT button to trigger the doorbell.
       selector:
         device:
           filter:
-            - integration: zha
             - integration: mqtt
-
-    zb_doorbell_command:
-      name: Button Command
-      default: any
-      selector:
-        select:
-          options:
-            - any
-            - single
-            - double
-            - hold
-
-    zb_mqtt_topic:
-      name: MQTT Topic
-      selector:
-        text: {}
-      description: "Enter the MQTT topic for the doorbell button."
-      default: "zigbee2mqtt"
-
-    # Global presence config
-    presence_zone:
-      name: Presence Zone
-      default: zone.home
-      selector:
-        entity:
-          domain: zone
-
-    # STOP condition
-    stop_entities:
-      name: Stop If Any of These Entities Change
-      selector:
-        target:
-          entity:
-            domain:
-              - binary_sensor
-              - lock
-      description: "Select entities (e.g., binary sensors or locks) that will stop the automation when their state changes."
-
-    # Lights section
-    enable_lights:
-      name: Enable Light Flashing
-      default: true
-      selector:
-        boolean: {}
-      description: "Enable or disable light flashing when the doorbell is pressed."
-    lights_presence_condition:
-      name: Flash Lights Presence Condition
-      default: always
-      selector:
-        select:
-          options:
-            - always
-            - only_if_someone_in_zone
-            - only_if_no_one_in_zone
-    alert_lights:
-      name: Lights to Blink
-      selector:
-        target:
-          entity:
-            domain: light
-    blink_color:
-      name: Blink Color
-      selector:
-        color_rgb: {}
-      default: [255, 255, 255]  # Default to white
-      description: "Optional: Set the color for blinking lights. Defaults to white if not specified."
-
-    # Sound section
-    enable_sound:
-      name: Enable Sound Playback
-      default: true
-      selector:
-        boolean: {}
-    sound_presence_condition:
-      name: Play Sound Presence Condition
-      default: always
-      selector:
-        select:
-          options:
-            - always
-            - only_if_someone_in_zone
-            - only_if_no_one_in_zone
     media_players:
       name: Media Players
+      description: Select media players to play the doorbell sound.
       selector:
         target:
           entity:
             domain: media_player
-    media_url:
-      name: Media File URL
-      selector:
-        text: {}
-      description: "Enter a valid URL for the media file to play."
-      default: "https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/doorbell.mp3"
-
-    # Notifications
-    enable_notification:
-      name: Enable Notifications
-      default: true
-      selector:
-        boolean: {}
-      description: "Enable or disable sending notifications when the doorbell is pressed."
-
-    notification_presence_condition:
-      name: Notification Presence Condition
-      default: always
-      selector:
-        select:
-          options:
-            - always
-            - only_if_someone_in_zone
-            - only_if_no_one_in_zone
-      description: "Specify when notifications should be sent."
-
-    notify_targets:
-      name: Notification Targets
-      default: []
-      selector:
-        device:
-          filter:
-            - integration: mobile_app
-          multiple: true
-      description: "Select one or more devices to send the notification to when doorbell is pushed."
-
-    notification_title:
-      name: Notification Title
-      default: "Doorbell Alert!"
-      selector:
-        text: {}
-      description: "Specify the title of the notification."
-
-    notification_message:
-      name: Notification Message
-      default: "Someones at the door!"
-      selector:
-        text: {}
-      description: "Specify the message to send in the notification."
-
-    # Custom Actions
-    enable_custom_actions:
-      name: Enable Custom Actions
+    send_notification:
+      name: Notify Phone
+      description: Optionally notify a mobile device.
       default: false
       selector:
         boolean: {}
-      description: "Enable or disable custom actions when the doorbell is pressed."
-    custom_actions_presence_condition:
-      name: Custom Actions Presence Condition
-      default: always
+    notify_target:
+      name: Notification Target
+      description: Mobile app notify target (e.g. notify.mobile_app_xyz)
+      default: []
       selector:
-        select:
-          options:
-            - always
-            - only_if_someone_in_zone
-            - only_if_no_one_in_zone
-    custom_actions:
-      name: Custom Actions
-      selector:
-        action: {}
-      description: "Define one or more custom actions to execute when the doorbell is pressed."
+        entity:
+          domain: notify
 
-variables:
-  presence_zone: !input presence_zone
-  stop_entities: !input stop_entities
-  enable_lights: !input enable_lights
-  lights_presence_condition: !input lights_presence_condition
-  alert_lights: !input alert_lights
-  blink_color: !input blink_color
-  enable_sound: !input enable_sound
-  sound_presence_condition: !input sound_presence_condition
-  media_players: !input media_players
-  media_url: !input media_url
-  enable_notification: !input enable_notification
-  notification_presence_condition: !input notification_presence_condition
-  notify_targets: !input notify_targets
-  notification_title: !input notification_title
-  notification_message: !input notification_message
-  enable_custom_actions: !input enable_custom_actions
-  custom_actions_presence_condition: !input custom_actions_presence_condition
-  custom_actions: !input custom_actions
-  zb_integration: !input zb_integration
-  zb_doorbell_button: !input zb_doorbell_button
-  zb_doorbell_command: !input zb_doorbell_command
-  zb_mqtt_topic: !input zb_mqtt_topic
-
-triggers:
-  - domain: mqtt
-    device_id: !input zb_doorbell_button
+trigger:
+  - platform: device
+    device_id: !input button_device
+    domain: mqtt
     type: action
     subtype: single
-    trigger: device
 
-  - platform: event
-    event_type: zb_zha_event
-    id: !input zb_doorbell_button
-
-condition:
-  - condition: or
-    conditions:
-    - condition: template
-      value_template: "{{ trigger.id == 'generic_button' }}"  # skip condition if triggered by door
-    - condition: template
-      value_template: >
-        {% set is_zha = (zb_integration == 'zha') %}
-        {% set is_z2m = (zb_integration == 'zigbee2mqtt') %}
-        {% set cmd = zb_doorbell_command %}
-        {% if is_zha %}
-          {{ (cmd == 'any') or (trigger.event.data.device_id == inputs.zb_doorbell_button and trigger.event.data.command == cmd) }}
-        {% elif is_z2m %}
-          {{ (cmd == 'any') or (trigger.payload_json.action == cmd) }}
-        {% else %}
-          false
-        {% endif %}
+condition: []
 
 action:
-  # Stop condition: If any of the stop entities change state, stop the automation
-  - condition: template
-    value_template: >
-      {% if stop_entities | length > 0 %}
-      {{ not (trigger.entity_id in variables.stop_entities) }}
-      {% else %}
-      true
-      {% endif %}
+  - service: media_player.play_media
+    data:
+      media_content_id: >-
+        https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/doorbell.mp3
+      media_content_type: audio/mpeg
+    target: !input media_players
 
-  # Flash lights if enabled and presence condition is met
   - choose:
       - conditions:
           - condition: template
-            value_template: >
-              {% if lights_presence_condition == "always" %}
-              true
-              {% elif lights_presence_condition == "only_if_someone_in_zone" %}
-              {{ is_state(presence_zone, "home") }}
-              {% elif lights_presence_condition == "only_if_no_one_in_zone" %}
-              {{ not is_state(presence_zone, "home") }}
-              {% else %}
-              false
-              {% endif %}
-          - condition: template
-            value_template: "{{ enable_lights }}"
+            value_template: "{{ iif(is_boolean(input.send_notification), input.send_notification, false) }}"
         sequence:
-          - service: light.turn_on
-            target: !input alert_lights
+          - service: notify.{{ iif(input.notify_target is string, input.notify_target.split('.')[-1], 'mobile_app') }}
             data:
-              flash: short
-              rgb_color: !input blink_color
-
-  # Play sound if enabled and presence condition is met
-  - choose:
-      - conditions:
-          - condition: template
-            value_template: >
-              {% if sound_presence_condition == "always" %}
-              true
-              {% elif sound_presence_condition == "only_if_someone_in_zone" %}
-              {{ is_state(presence_zone, "home") }}
-              {% elif sound_presence_condition == "only_if_no_one_in_zone" %}
-              {{ not is_state(presence_zone, "home") }}
-              {% else %}
-              false
-              {% endif %}
-          - condition: template
-            value_template: "{{ enable_sound }}"
-        sequence:
-          - service: media_player.play_media
-            target: !input media_players
-            data:
-              media_content_id: !input media_url
-              media_content_type: music
-
-  # Send notification if enabled and presence condition is met
-  - choose:
-      - conditions:
-          - condition: template
-            value_template: >
-              {% if notification_presence_condition == "always" %}
-              true
-              {% elif notification_presence_condition == "only_if_someone_in_zone" %}
-              {{ is_state(presence_zone, "home") }}
-              {% elif notification_presence_condition == "only_if_no_one_in_zone" %}
-              {{ not is_state(presence_zone, "home") }}
-              {% else %}
-              false
-              {% endif %}
-          - condition: template
-            value_template: "{{ enable_notification }}"
-        sequence:
-          - service: notify.notify
-            target: "{{ notify_targets | default([]) }}"
-            data:
-              title: !input notification_title
-              message: !input notification_message
-
-  # Execute custom actions if enabled and presence condition is met
-  - choose:
-      - conditions:
-          - condition: template
-            value_template: >
-              {% if custom_actions_presence_condition == "always" %}
-              true
-              {% elif custom_actions_presence_condition == "only_if_someone_in_zone" %}
-              {{ is_state(presence_zone, "home") }}
-              {% elif custom_actions_presence_condition == "only_if_no_one_in_zone" %}
-              {{ not is_state(presence_zone, "home") }}
-              {% else %}
-              false
-              {% endif %}
-          - condition: template
-            value_template: "{{ enable_custom_actions }}"
-        sequence: !input custom_actions
+              title: Dörrklocka alarm!
+              message: Någon är vid dörren!

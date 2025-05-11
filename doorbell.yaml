@@ -16,14 +16,45 @@ blueprint:
   input:
     # Doorbell Button
     doorbell_button:
-      name: Doorbell Button
+      name: Sensor Doorbell Button
       selector:
         entity:
           domain:
             - binary_sensor
             - sensor
             - device_trigger
-      description: "Select the entity that represents the doorbell button. This can be any button-type device, such as a Sonoff SNZB-01P."
+      description: "Select the entity that represents the doorbell button. This can be any button-type device."
+
+    zb_integration:
+      name: Zigbee Integration
+      default: zha
+      selector:
+        select:
+          options:
+            - zha
+            - zigbee2mqtt
+
+    zb_button_device:
+      name: Zigbee Button Device (ZHA)
+      selector:
+        device:
+          integration: zha
+
+    zb_mqtt_topic:
+      name: MQTT Topic (Zigbee2MQTT)
+      selector:
+        text:
+
+    zb_button_command:
+      name: Button Command
+      default: any
+      selector:
+        select:
+          options:
+            - any
+            - single
+            - double
+            - hold
 
     # Global presence config
     presence_zone:
@@ -191,7 +222,25 @@ trigger:
   - platform: state
     entity_id: !input doorbell_button
 
-condition: []
+  - platform: event
+    event_type: zha_event
+
+  - platform: mqtt
+    topic: !input mqtt_topic
+
+condition:
+  - condition: template
+    value_template: >
+      {% set is_zha = (inputs.integration == 'zha') %}
+      {% set is_z2m = (inputs.integration == 'zigbee2mqtt') %}
+      {% set cmd = inputs.button_command %}
+      {% if is_zha %}
+        {{ (cmd == 'any') or (trigger.event.data.device_id == inputs.button_device and trigger.event.data.command == cmd) }}
+      {% elif is_z2m %}
+        {{ (cmd == 'any') or (trigger.payload_json.action == cmd) }}
+      {% else %}
+        false
+      {% endif %}
 
 action:
   # Stop condition: If any of the stop entities change state, stop the automation

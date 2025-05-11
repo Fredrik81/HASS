@@ -22,6 +22,32 @@ blueprint:
         device:
           filter:
             - integration: mqtt
+    zone_entity:
+      name: Presence Zone
+      description: Zone entity to check for presence (e.g., zone.home).
+      selector:
+        entity:
+          domain: zone
+    media_zone_condition:
+      name: When to play media
+      description: Choose when to play media based on zone presence.
+      default: always
+      selector:
+        select:
+          options:
+            - label: Always
+              value: always
+            - label: Only if someone is in the zone
+              value: in
+            - label: Only if no one is in the zone
+              value: out
+    media_url:
+      name: Media File URL
+      description: URL of the media file to play (e.g., MP3).
+      default: https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/doorbell.mp3
+      selector:
+        text:
+          type: url
     media_players:
       name: Media Players
       description: Select media players to play the doorbell sound.
@@ -35,37 +61,66 @@ blueprint:
       default: false
       selector:
         boolean: {}
+    notify_zone_condition:
+      name: When to send notification
+      description: Choose when to send the notification based on zone presence.
+      default: always
+      selector:
+        select:
+          options:
+            - label: Always
+              value: always
+            - label: Only if someone is in the zone
+              value: in
+            - label: Only if no one is in the zone
+              value: out
     notify_target:
       name: Notification Target
       description: Mobile app notify target (e.g. notify.mobile_app_xyz)
       default: []
       selector:
-        entity:
-          domain: notify
+        device:
+          filter:
+            - integration: mobile_app
+          multiple: true
 
-trigger:
-  - platform: device
-    device_id: !input button_device
-    domain: mqtt
-    type: action
-    subtype: single
-
-condition: []
+variables:
+  zone: !input zone_entity
+  zone_persons: "{{ state_attr(zone, 'persons') if state_attr(zone, 'persons') is defined else [] }}"
+  someone_in_zone: >
+    {{ expand('group.all_persons') | selectattr('state', 'eq', 'home') | selectattr('attributes.latitude', 'eq', state_attr(zone, 'latitude')) | selectattr('attributes.longitude', 'eq', state_attr(zone, 'longitude')) | list | count > 0 }}
 
 action:
-  - service: media_player.play_media
-    data:
-      media_content_id: >-
-        https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/doorbell.mp3
-      media_content_type: audio/mpeg
-    target: !input media_players
+  - choose:
+      - conditions:
+          - condition: or
+            conditions:
+              - condition: template
+                value_template: "{{ iif(!input.media_zone_condition or input.media_zone_condition == 'always', true, false) }}"
+              - condition: template
+                value_template: "{{ input.media_zone_condition == 'in' and someone_in_zone }}"
+              - condition: template
+                value_template: "{{ input.media_zone_condition == 'out' and not someone_in_zone }}"
+        sequence:
+          - service: media_player.play_media
+            data:
+              media_content_id: !input media_url
+              media_content_type: audio/mpeg
+            target: !input media_players
 
   - choose:
       - conditions:
           - condition: template
             value_template: "{{ iif(is_boolean(input.send_notification), input.send_notification, false) }}"
+          - condition: or
+            conditions:
+              - condition: template
+                value_template: "{{ input.notify_zone_condition == 'always' }}"
+              - condition: template
+                value_template: "{{ input.notify_zone_condition == 'in' and someone_in_zone }}"
+              - condition: template
+                value_template: "{{ input.notify_zone_condition == 'out' and not someone_in_zone }}"
         sequence:
           - service: notify.{{ iif(input.notify_target is string, input.notify_target.split('.')[-1], 'mobile_app') }}
             data:
               title: Dörrklocka alarm!
-              message: Någon är vid dörren!

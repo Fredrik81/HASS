@@ -28,11 +28,15 @@ blueprint:
       default: true
       selector:
         boolean: {}
-    lights_only_if_away:
-      name: Flash Lights Only If No One Is in Zone
-      default: false
+    lights_presence_condition:
+      name: Flash Lights Presence Condition
+      default: always
       selector:
-        boolean: {}
+        select:
+          options:
+            - always
+            - only_if_someone_in_zone
+            - only_if_no_one_in_zone
     alert_lights:
       name: Lights to Blink
       selector:
@@ -50,11 +54,15 @@ blueprint:
       default: true
       selector:
         boolean: {}
-    sound_only_if_away:
-      name: Play Sound Only If No One Is in Zone
-      default: false
+    sound_presence_condition:
+      name: Play Sound Presence Condition
+      default: always
       selector:
-        boolean: {}
+        select:
+          options:
+            - always
+            - only_if_someone_in_zone
+            - only_if_no_one_in_zone
     media_players:
       name: Media Players
       selector:
@@ -65,6 +73,7 @@ blueprint:
       name: Media File URL
       selector:
         text: {}
+      description: "Enter a valid URL for the media file to play."
 
     # Notifications
     enable_notification:
@@ -72,11 +81,15 @@ blueprint:
       default: true
       selector:
         boolean: {}
-    notification_only_if_away:
-      name: Notify Only If No One Is in Zone
-      default: false
+    notification_presence_condition:
+      name: Notify Presence Condition
+      default: always
       selector:
-        boolean: {}
+        select:
+          options:
+            - always
+            - only_if_someone_in_zone
+            - only_if_no_one_in_zone
     notify_targets:
       name: Devices to Notify
       selector:

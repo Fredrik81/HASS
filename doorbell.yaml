@@ -102,22 +102,24 @@ blueprint:
 
     notify_targets:
       name: Notification Targets
+      default: []
       selector:
-        target:
-          entity:
-            domain: notify
-      description: "Select one or more notification services to send the notification to."
+        device:
+          filter:
+            - integration: mobile_app
+          multiple: true
+      description: "Select one or more devices to send the notification to when doorbell is pushed."
 
     notification_title:
       name: Notification Title
-      default: "Someone at the door!"
+      default: "Doorbell Alert!"
       selector:
         text: {}
       description: "Specify the title of the notification."
 
     notification_message:
       name: Notification Message
-      default: "Someone pressed the doorbell."
+      default: "Someones at the door!"
       selector:
         text: {}
       description: "Specify the message to send in the notification."
@@ -143,3 +145,24 @@ blueprint:
       selector:
         action: {}
       description: "Define one or more custom actions to execute when the doorbell is pressed."
+
+variables:
+  notify_targets: !input notify_targets
+  presence_zone: !input presence_zone
+  stop_entities: !input stop_entities
+  enable_lights: !input enable_lights
+  lights_presence_condition: !input lights_presence_condition
+  alert_lights: !input alert_lights
+  blink_color: !input blink_color
+  enable_sound: !input enable_sound
+  sound_presence_condition: !input sound_presence_condition
+  media_players: !input media_players
+  media_url: !input media_url
+  enable_notification: !input enable_notification
+  notification_presence_condition: !input notification_presence_condition
+  notify_targets: !input notify_targets
+  notification_title: !input notification_title
+  notification_message: !input notification_message
+  enable_custom_actions: !input enable_custom_actions
+  custom_actions_presence_condition: !input custom_actions_presence_condition
+  custom_actions: !input custom_actions

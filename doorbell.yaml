@@ -114,7 +114,7 @@ action:
           - condition: or
             conditions:
               - condition: template
-                value_template: "{{ iif(input.media_zone_condition == 'always', true, false) }}"
+                value_template: "{{ input.media_zone_condition == 'always' }}"
               - condition: template
                 value_template: "{{ input.media_zone_condition == 'in' and someone_in_zone }}"
               - condition: template

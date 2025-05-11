@@ -21,6 +21,7 @@ blueprint:
         target:
           entity:
             domain: binary_sensor
+      description: "Select entities that will stop the automation when their state changes."
 
     # Lights section
     enable_lights:
@@ -28,6 +29,7 @@ blueprint:
       default: true
       selector:
         boolean: {}
+      description: "Enable or disable light flashing when the doorbell is pressed."
     lights_presence_condition:
       name: Flash Lights Presence Condition
       default: always
@@ -47,6 +49,7 @@ blueprint:
       name: Blink Color
       selector:
         color_rgb: {}
+      description: "Optional: Set the color for blinking lights. Leave empty for default behavior."
 
     # Sound section
     enable_sound:
@@ -74,6 +77,7 @@ blueprint:
       selector:
         text: {}
       description: "Enter a valid URL for the media file to play."
+      default: "https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell.mp3"
 
     # Notifications
     enable_notification:
@@ -96,6 +100,7 @@ blueprint:
         target:
           entity:
             domain: notify
+      default: []  # Default to an empty list if no devices are selected
     notification_message:
       name: Message
       selector:

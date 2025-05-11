@@ -223,19 +223,19 @@ trigger:
     entity_id: !input doorbell_button
 
   - platform: event
-    event_type: zha_event
+    event_type: zb_zha_event
 
   - platform: mqtt
-    topic: !input mqtt_topic
+    topic: !input zb_mqtt_topic
 
 condition:
   - condition: template
     value_template: >
-      {% set is_zha = (inputs.integration == 'zha') %}
-      {% set is_z2m = (inputs.integration == 'zigbee2mqtt') %}
-      {% set cmd = inputs.button_command %}
+      {% set is_zha = (inputs.zb_integration == 'zha') %}
+      {% set is_z2m = (inputs.zb_integration == 'zigbee2mqtt') %}
+      {% set cmd = inputs.zb_button_command %}
       {% if is_zha %}
-        {{ (cmd == 'any') or (trigger.event.data.device_id == inputs.button_device and trigger.event.data.command == cmd) }}
+        {{ (cmd == 'any') or (trigger.event.data.device_id == inputs.zb_button_device and trigger.event.data.command == cmd) }}
       {% elif is_z2m %}
         {{ (cmd == 'any') or (trigger.payload_json.action == cmd) }}
       {% else %}

@@ -14,18 +14,6 @@ blueprint:
     [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M4M4ZS0Y)
   domain: automation
   input:
-    # Doorbell Button
-    doorbell_button:
-      name: Sensor Doorbell Button
-      selector:
-        entity:
-          domain:
-            - binary_sensor
-            - sensor
-            - device_trigger
-      description: "Select the entity that represents the doorbell button. This can be any button-type device."
-      default: ""
-
     zb_integration:
       name: Zigbee Integration
       selector:
@@ -207,7 +195,6 @@ blueprint:
       description: "Define one or more custom actions to execute when the doorbell is pressed."
 
 variables:
-  doorbell_button: !input doorbell_button
   presence_zone: !input presence_zone
   stop_entities: !input stop_entities
   enable_lights: !input enable_lights
@@ -237,11 +224,6 @@ triggers:
     type: action
     subtype: single
     trigger: device
-
-  - platform: state
-    entity_id: !input doorbell_button
-    id: generic_button
-    condition: "{{ doorbell_button != '' }}"
 
   - platform: event
     event_type: zb_zha_event

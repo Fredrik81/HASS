@@ -17,6 +17,15 @@ blueprint:
             - device_trigger
       description: "Select the entity that represents the doorbell button. This can be any button-type device, such as a Sonoff SNZB-01P."
 
+    # Custom Trigger
+    custom_trigger:
+      name: Custom Trigger
+      selector:
+        object: {}
+      description: >
+        Define a custom trigger configuration. This can be used to override the default
+        doorbell button trigger. Leave empty to use the default trigger.
+
     # Global presence config
     presence_zone:
       name: Presence Zone
@@ -179,9 +188,13 @@ variables:
   custom_actions: !input custom_actions
 
 trigger:
+  # Default doorbell button trigger
   - platform: state
     entity_id: !input doorbell_button
-    to: "on"  # Adjust this based on the state your doorbell button sends when pressed
+
+  # Custom trigger (if defined)
+  - <<: !input custom_trigger
+    # The `<<:` syntax merges the custom trigger object into the trigger list
 
 condition: []
 

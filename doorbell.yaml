@@ -79,7 +79,7 @@ blueprint:
       selector:
         text: {}
       description: "Enter a valid URL for the media file to play."
-      default: "https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell.mp3"
+      default: "https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/doorbell.mp3"
 
     # Notifications
     enable_notification:

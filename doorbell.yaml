@@ -87,10 +87,16 @@ blueprint:
 
 variables:
   zone: !input zone_entity
-  zone_persons: "{{ state_attr(zone, 'persons') if state_attr(zone, 'persons') is defined else [] }}"
-  someone_in_zone: >
-    {{ expand('group.all_persons') | selectattr('state', 'eq', 'home') | selectattr('attributes.latitude', 'eq', state_attr(zone, 'latitude')) | selectattr('attributes.longitude', 'eq', state_attr(zone, 'longitude')) | list | count > 0 }}
+  media_condition: !input media_zone_condition
+  notify_condition: !input notify_zone_condition
+  send_notification: !input send_notification
+  notify_target: !input notify_target
   media_url: !input media_url
+  someone_in_zone: >
+    {{ expand('group.all_persons') | selectattr('state', 'eq', 'home') |
+       selectattr('attributes.latitude', 'eq', state_attr(zone, 'latitude')) |
+       selectattr('attributes.longitude', 'eq', state_attr(zone, 'longitude')) | list | count > 0 }}
+  media_players: !input media_players
 
 action:
   - choose:
@@ -98,7 +104,7 @@ action:
           - condition: or
             conditions:
               - condition: template
-                value_template: "{{ iif(!input.media_zone_condition or input.media_zone_condition == 'always', true, false) }}"
+                value_template: "{{ iif(input.media_zone_condition == 'always', true, false) }}"
               - condition: template
                 value_template: "{{ input.media_zone_condition == 'in' and someone_in_zone }}"
               - condition: template

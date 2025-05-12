@@ -4,47 +4,21 @@ blueprint:
     # 🔔 Doorbell Automation
     **Version: 1.0**
 
+    ## Supported Platforms
+    - Zigbee2MQTT/MQTT Button
+    - ZHA Button (comming soon)
+
     This blueprint allows you to set up a doorbell automation that can flash lights,
 
     play sounds, send notifications, and execute custom actions when a doorbell is pressed.
 
     You can customize the behavior based on whether anyone is home or not.
 
-    ## :apple: iOS Notification Options
-    |Interruption level | Breaks through Focus | Overrides Ring/Silent switch on iPhone and iPad|
-    |--- | --- | ---|
-    |Default | No | No|
-    |Critical Notification | Yes | Yes|
-    |Time Sensitive Notification | Yes - Must be enabled in focus | No|
-    |Quiet notifications without waking screen | No | No|
-
-
-    * **Built-in Notification Sounds:**
-
-    1. In the Home Assistant app, depending on your access you have 2 options, go to
-      * `Settings > Companion App > Notifications > Sounds`.
-      * `App Configuration > Notifications > Sounds`.
-    2. Tap the **Bundled** tab.
-
-    ## :robot: Android Notification Options
-
-    **What are High Priority Notifications?**
-
-    Notifications will appear immediately in most cases. However, in some cases (such as when the phone is stationary or when the screen has been turned off for a prolonged period of time), default notifications will not ring the phone until the screen is turned on. High priority notifications are designed to alert you to important events or updates that require your immediate attention, ensuring they are received promptly even in these situations.
-
-    **What are Sticky Notifications?**
-
-    Sticky notifications are a type of notification that remain on your device’s notification shade until they are manually dismissed by the user. Unlike regular notifications, which can disappear when they are tapped, sticky notifications ensure that important messages are persistently visible until you actively clear or swipe them away, ensuring that critical information stays visible until addressed.
-
-    ## Notification Channels
-
-    **What are Notification Channels?**
-
-    Notification channels are a feature for Android devices only. They allow you to categorize notifications, making it easier to manage and prioritize them. Each channel can have its own settings, such as notification style, sound, vibration, blink light, app icon badges, locked screen, and do not disturb, ensuring that you receive notifications in the manner most appropriate for each type of notification you receive.
-
-    **How Do I Create a Notification Channel?**
-
-    Before creating channels, it is best to consider what channels you would like to have for your notifications. This will help you structure it correctly, as once you create a channel, it can be removed but will never be deleted unless you reset your app. Taking the time to consider how you would like it structured will help you in the long run.
+    ## :music: Doorbell Sounds that you can use (or use your own)
+    - https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/doorbell.mp3
+    - https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/halloween.mp3
+    - https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/christmas.mp3
+    - https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/christmas2.mp3
 
 
     This automation uses code from: https://community.home-assistant.io/t/650166

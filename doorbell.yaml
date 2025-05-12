@@ -16,12 +16,13 @@ blueprint:
   source_url: https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell.yaml
   input:
     trigger_config:
-      name: "Trigger Settings"
-      icon: mdi:zigbee
+      name: "General Settings"
+      icon: mdi:cog
       collapsed: false
       input:
         button_device:
           name: Doorbell Button (MQTT)
+          icon: mdi:zigbee
           description: Select the Zigbee2MQTT button to trigger the doorbell.
           selector:
             device:
@@ -29,6 +30,7 @@ blueprint:
                 - integration: mqtt
         zone_entity:
           name: Presence Zone
+          icon: mdi:home
           description: Zone entity to check for presence (e.g., zone.home).
           selector:
             entity:
@@ -41,12 +43,14 @@ blueprint:
       input:
         enable_music:
           name: Enable Music Playback
+          icon: mdi:toggle-switch
           description: Enable or disable playing music when the doorbell is triggered.
           default: true
           selector:
             boolean: {}
         media_zone_condition:
           name: When to play media
+          icon: mdi:home
           description: Choose when to play media based on zone presence.
           default: always
           selector:
@@ -79,12 +83,14 @@ blueprint:
       input:
         enable_notification:
           name: Enable Notifications
+          icon: mdi:toggle-switch
           description: Optionally notify a mobile device.
           default: false
           selector:
             boolean: {}
         notify_zone_condition:
           name: When to send notification
+          icon: mdi:home
           description: Choose when to send the notification based on zone presence.
           default: always
           selector:
@@ -98,6 +104,7 @@ blueprint:
                   value: out
         notify_target:
           name: Notification Target
+          icon: mdi:bell
           description: Mobile app notify target (e.g. notify.mobile_app_xyz)
           default: []
           selector:
@@ -105,6 +112,39 @@ blueprint:
               filter:
                 - integration: mobile_app
               multiple: true
+    custom_actions:
+      name: "Custom Actions"
+      icon: mdi:script-text
+      collapsed: true
+      input:
+        enable_custom_actions:
+          name: Enable Custom Actions
+          description: Enable or disable custom actions when the doorbell is triggered.
+          default: false
+          selector:
+            boolean: {}
+
+        custom_actions_presence_condition:
+          name: Custom Actions Presence Condition
+          description: Choose when to execute custom actions based on zone presence.
+          default: always
+          selector:
+            select:
+              options:
+                - label: Always
+                  value: always
+                - label: Only if someone is in the zone
+                  value: in
+                - label: Only if no one is in the zone
+                  value: out
+        custom_actions:
+          name: Custom Actions
+          description: >
+            Optional custom actions to execute when the doorbell is pressed.
+            This can be a script, scene, or any other service call.
+          default: []
+          selector:
+            action: {}
 
 variables:
   zone: !input zone_entity
@@ -120,6 +160,9 @@ variables:
   media_url: !input media_url
   media_players: !input media_players
   enable_music: !input enable_music
+  enable_custom_actions: !input enable_custom_actions
+  custom_actions_presence_condition: !input custom_actions_presence_condition
+  custom_actions: !input custom_actions
 
 triggers:
   - platform: device
@@ -157,7 +200,7 @@ action:
     - alias: "Check if notification should be sent"
       conditions:
         - condition: template
-          value_template: "{{ iif(is_boolean(enable_notification), enable_notification, false) }}"
+          value_template: "{{ enable_notification }}"  # Check if notification is enabled
         - condition: template
           value_template: "{{ notify_zone_condition == 'always' or (notify_zone_condition == 'in' and someone_in_zone) or (notify_zone_condition == 'out' and not someone_in_zone) }}"
       sequence:
@@ -165,3 +208,14 @@ action:
           data:
             title: Dörrklocka alarm!
             message: "Någon är vid dörren"
+  - choose:
+      - alias: "Check if custom actions should run"
+        conditions:
+          - condition: template
+            value_template: "{{ enable_custom_actions }}"  # Check if custom actions are enabled
+          - condition: template
+            value_template: >
+              {{ custom_actions_presence_condition == 'always' or
+                 (custom_actions_presence_condition == 'in' and someone_in_zone) or
+                 (custom_actions_presence_condition == 'out' and not someone_in_zone) }}
+        sequence: !input custom_actions  # Execute the custom actions

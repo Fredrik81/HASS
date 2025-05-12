@@ -10,6 +10,53 @@ blueprint:
 
     You can customize the behavior based on whether anyone is home or not.
 
+    ## :apple: iOS Notification Options
+    |Interruption level | Breaks through Focus | Overrides Ring/Silent switch on iPhone and iPad|
+    |--- | --- | ---|
+    |Default | No | No|
+    |Critical Notification | Yes | Yes|
+    |Time Sensitive Notification | Yes - Must be enabled in focus | No|
+    |Quiet notifications without waking screen | No | No|
+
+    ### Notification Sound
+    The Home Assistant app for iOS includes built-in notification sounds and allows importing custom sounds. Here's how to manage your notification sounds:
+
+    :warning: **Note:** In the blueprint, always use the full filename (including the extension) in the **Notification Sound - iOS Only** input as shown below. If left blank, the default notification sound will be used according to your device's settings.
+
+    The Home Assistant app for iOS includes built-in notification sounds, and you can import sounds from your iOS device into the app. Custom sounds can also be added via iTunes or from your cloud storage.
+
+    :warning: **Note:** In the blueprint, make sure to enter the full filename (including the file extension) in the **Notification Sound (iOS Only)** input, as shown below. If left blank, your device will play the default notification sound based on its settings.
+
+
+    * **Built-in Notification Sounds:**
+
+    1. In the Home Assistant app, depending on your access you have 2 options, go to 
+      * `Settings > Companion App > Notifications > Sounds`.
+      * `App Configuration > Notifications > Sounds`.
+    2. Tap the **Bundled** tab.
+
+    ## :robot: Android Notification Options
+
+    **What are High Priority Notifications?**
+
+    Notifications will appear immediately in most cases. However, in some cases (such as when the phone is stationary or when the screen has been turned off for a prolonged period of time), default notifications will not ring the phone until the screen is turned on. High priority notifications are designed to alert you to important events or updates that require your immediate attention, ensuring they are received promptly even in these situations.
+
+    **What are Sticky Notifications?**
+
+    Sticky notifications are a type of notification that remain on your device’s notification shade until they are manually dismissed by the user. Unlike regular notifications, which can disappear when they are tapped, sticky notifications ensure that important messages are persistently visible until you actively clear or swipe them away, ensuring that critical information stays visible until addressed.
+
+    ## Notification Channels
+
+    **What are Notification Channels?**
+
+    Notification channels are a feature for Android devices only. They allow you to categorize notifications, making it easier to manage and prioritize them. Each channel can have its own settings, such as notification style, sound, vibration, blink light, app icon badges, locked screen, and do not disturb, ensuring that you receive notifications in the manner most appropriate for each type of notification you receive.
+
+    **How Do I Create a Notification Channel?**
+
+    Before creating channels, it is best to consider what channels you would like to have for your notifications. This will help you structure it correctly, as once you create a channel, it can be removed but will never be deleted unless you reset your app. Taking the time to consider how you would like it structured will help you in the long run.
+
+
+    This automation uses code from: https://community.home-assistant.io/t/650166
 
     [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M4M4ZS0Y)
   domain: automation
@@ -96,6 +143,19 @@ blueprint:
                   value: in
                 - label: Only if no one is in the zone
                   value: out
+        notification_title:
+          name: Notification Title
+          description: Title of the notification. Defaults to "Doorbell Alert!".
+          default: "Doorbell Alert!"
+          selector:
+            text: {}
+
+        notification_message:
+          name: Notification Message
+          description: Message of the notification. Defaults to "Someone is at the door!".
+          default: "Someone is at the door!"
+          selector:
+            text: {}
         notify_target:
           name: Notification Target
           description: Mobile app notify target (e.g. notify.mobile_app_xyz)
@@ -105,6 +165,74 @@ blueprint:
               filter:
                 - integration: mobile_app
               multiple: true
+        start_notify_interruption_level:
+          name: Interruption Level - iOS Only
+          description: >
+            On devices running iOS 15 and later, you can configure the interruption level for your notifications to ensure they are delivered according to your preferences.
+            Choose the desired interruption level from the dropdown list.
+            Critical and time-sensitive notifications must be turned ON within the Home Assistant App, and time-sensitive notifications must be allowed in your Focus settings.
+          default: active
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - label: Default
+                  value: "active"
+                - label: Critical Notifications
+                  value: "critical"
+                - label: Time Sensitive Notifications
+                  value: "time-sensitive"
+                - label: Quiet Notifications Without Waking Screen
+                  value: "passive"
+        start_notify_sound:
+          name: Notification Sound - iOS Only
+          description: >
+            The Home Assistant app for iOS includes built-in notification sounds, and you can import sounds from your iOS device into the app.
+            Custom sounds can also be added via iTunes or from your cloud storage.
+            When entering a sound, ensure you use the full filename, including the extension.
+
+
+            For more information on using sounds in the Home Assistant app, [Click Here](https://community.home-assistant.io/t/650166/278)
+          default: []
+          selector:
+            text:
+        start_notify_data:
+          name: Android Only Options (Optional)
+          description: >
+            **High Priority** notifications ensure that you receive important alerts immediately.
+            These notifications bypass normal delivery delays and are delivered instantly to your device.
+
+
+            **Sticky Notification** ensure that important alerts are not dismissed when selected. They remain on your notification screen until you actively clear or swipe them away, ensuring that critical information stays visible until addressed.
+            
+
+            **Notification Channel** allow you to easily organize different notification settings,
+            including notification sounds, vibrations, and other device-specific features.
+            If you choose this option, please enter your desired channel name below.
+
+
+            For more information on notification options [Click Here](https://community.home-assistant.io/t/650166/278)
+          default: []
+          selector:
+            select:
+              multiple: true
+              options:
+                - label: High Priority
+                  value: "high_priority"
+                - label: Sticky Notification
+                  value: "sticky"
+                - label: Notification Channel
+                  value: "channel"
+        start_notify_channel:
+          name: Notification Channel - Android Only
+          description: >
+            If you have chosen to use a notification channel, simply enter the name of an existing channel to apply its pre-configured settings.
+            If you don't have a channel yet, you can create a new one by entering a name here.
+            When your automation sends the first notification, it will create the channel on your device.
+            After the channel is created, you can customize its notification settings to your preference directly on your device.
+          default: []
+          selector:
+            text:
     custom_actions:
       name: "Custom Actions"
       icon: mdi:script-text
@@ -157,6 +285,36 @@ variables:
   custom_actions_presence_condition: !input custom_actions_presence_condition
   custom_actions: !input custom_actions
 
+  #Notification variables
+  notification_interruption_level: !input start_notify_interruption_level
+  notification_sound: !input start_notify_sound
+  notification_data: !input start_notify_data
+  notification_channel: !input start_notify_channel
+  notification_title: !input notification_title
+  notification_message: !input notification_message
+  notification_msg_data: >-
+    {% set message = namespace(data={}) %}
+    {% set push = namespace(data={}) %}
+    {% if start_notify_interruption_level in ['active', 'critical', 'time-sensitive', 'passive'] %}
+      {% set push.data = dict(push.data, **{ 'interruption-level': start_notify_interruption_level }) %}
+    {% endif %}
+    {% if start_notify_sound != [] %}
+      {% set push.data = dict(push.data, **{ 'sound': start_notify_sound }) %}
+    {% endif %}
+    {% if push.data %}
+      {% set message.data = dict(message.data, **{ 'push': push.data }) %}
+    {% endif %}
+    {% if 'high_priority' in start_notify_data %}
+      {% set message.data = dict(message.data, **{ 'ttl': 0, 'priority': 'high' }) %}
+    {% endif %}
+    {% if 'channel' in start_notify_data %}
+      {% set message.data = dict(message.data, **{ 'channel': start_notify_channel }) %}
+    {% endif %}
+    {% if 'sticky' in start_notify_data %}
+      {% set message.data = dict(message.data, **{ 'sticky': "true" }) %}
+    {% endif %}
+    {{ message.data }}
+
 triggers:
   - platform: device
     device_id: !input button_device
@@ -197,10 +355,22 @@ action:
         - condition: template
           value_template: "{{ notify_zone_condition == 'always' or (notify_zone_condition == 'in' and someone_in_zone) or (notify_zone_condition == 'out' and not someone_in_zone) }}"
       sequence:
-        - service: notify.{{ iif(input.notify_target is string, input.notify_target.split('.')[-1], 'mobile_app') }}
+        - alias: Send a notification to each device
+          repeat:
+            for_each: !input notify_target
+            sequence:
+              - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                data:
+                  message: "{{ notification_message }}"
+                  title: "{{ notification_title }}"
+                  data:
+                    push:
+                      category: "doorbell"
+                    zone_name: "{{ zone_name }}"
           data:
-            title: Dörrklocka alarm!
-            message: "Någon är vid dörren"
+              title: "{{ notification_title }}"
+              message: "{{ notification_message }}"
+              data: "{{ start_message_data }}"
   - choose:
       - alias: "Check if custom actions should run"
         conditions:

@@ -183,6 +183,8 @@ blueprint:
           selector:
             select:
               options:
+                - label: None
+                  value: []
                 - label: Chime
                   value: chime.caf
                 - label: Bell
@@ -290,25 +292,36 @@ variables:
   notification_msg_data: >-
     {% set message = namespace(data={}) %}
     {% set push = namespace(data={}) %}
+
     {% if notification_interruption_level in ['active', 'critical', 'time-sensitive', 'passive'] %}
       {% set push.data = dict(push.data, **{ 'interruption-level': notification_interruption_level }) %}
     {% endif %}
-    {% if notification_sound != [] %}
-      {% set push.data = dict(push.data, **{ 'sound': notification_sound }) %}
+
+    {% if notification_sound %}
+      {% set push.data = dict(push.data, **{
+        'sound': {
+          'name': notification_sound
+        }
+      }) %}
     {% endif %}
+
     {% if push.data %}
       {% set message.data = dict(message.data, **{ 'push': push.data }) %}
     {% endif %}
+
     {% if 'high_priority' in notification_data %}
       {% set message.data = dict(message.data, **{ 'ttl': 0, 'priority': 'high' }) %}
     {% endif %}
+
     {% if 'channel' in notification_data %}
       {% set message.data = dict(message.data, **{ 'channel': notification_channel }) %}
     {% endif %}
+
     {% if 'sticky' in notification_data %}
       {% set message.data = dict(message.data, **{ 'sticky': "true" }) %}
     {% endif %}
-    {{ message.data }}
+
+    {{ message.data }
 
 triggers:
   - platform: device

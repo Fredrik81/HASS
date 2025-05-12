@@ -30,7 +30,7 @@ blueprint:
 
     * **Built-in Notification Sounds:**
 
-    1. In the Home Assistant app, depending on your access you have 2 options, go to 
+    1. In the Home Assistant app, depending on your access you have 2 options, go to
       * `Settings > Companion App > Notifications > Sounds`.
       * `App Configuration > Notifications > Sounds`.
     2. Tap the **Bundled** tab.
@@ -165,7 +165,7 @@ blueprint:
               filter:
                 - integration: mobile_app
               multiple: true
-        start_notify_interruption_level:
+        notification_interruption_level:
           name: Interruption Level - iOS Only
           description: >
             On devices running iOS 15 and later, you can configure the interruption level for your notifications to ensure they are delivered according to your preferences.
@@ -184,7 +184,7 @@ blueprint:
                   value: "time-sensitive"
                 - label: Quiet Notifications Without Waking Screen
                   value: "passive"
-        start_notify_sound:
+        notification_sound:
           name: Notification Sound - iOS Only
           description: >
             The Home Assistant app for iOS includes built-in notification sounds, and you can import sounds from your iOS device into the app.
@@ -196,7 +196,7 @@ blueprint:
           default: []
           selector:
             text:
-        start_notify_data:
+        notification_data:
           name: Android Only Options (Optional)
           description: >
             **High Priority** notifications ensure that you receive important alerts immediately.
@@ -204,7 +204,7 @@ blueprint:
 
 
             **Sticky Notification** ensure that important alerts are not dismissed when selected. They remain on your notification screen until you actively clear or swipe them away, ensuring that critical information stays visible until addressed.
-            
+
 
             **Notification Channel** allow you to easily organize different notification settings,
             including notification sounds, vibrations, and other device-specific features.
@@ -223,7 +223,7 @@ blueprint:
                   value: "sticky"
                 - label: Notification Channel
                   value: "channel"
-        start_notify_channel:
+        notification_channel:
           name: Notification Channel - Android Only
           description: >
             If you have chosen to use a notification channel, simply enter the name of an existing channel to apply its pre-configured settings.
@@ -286,31 +286,31 @@ variables:
   custom_actions: !input custom_actions
 
   #Notification variables
-  notification_interruption_level: !input start_notify_interruption_level
-  notification_sound: !input start_notify_sound
-  notification_data: !input start_notify_data
-  notification_channel: !input start_notify_channel
+  notification_interruption_level: !input notification_interruption_level
+  notification_sound: !input notification_sound
+  notification_data: !input notification_data
+  notification_channel: !input notification_channel
   notification_title: !input notification_title
   notification_message: !input notification_message
   notification_msg_data: >-
     {% set message = namespace(data={}) %}
     {% set push = namespace(data={}) %}
-    {% if start_notify_interruption_level in ['active', 'critical', 'time-sensitive', 'passive'] %}
-      {% set push.data = dict(push.data, **{ 'interruption-level': start_notify_interruption_level }) %}
+    {% if notification_interruption_level in ['active', 'critical', 'time-sensitive', 'passive'] %}
+      {% set push.data = dict(push.data, **{ 'interruption-level': notification_interruption_level }) %}
     {% endif %}
-    {% if start_notify_sound != [] %}
-      {% set push.data = dict(push.data, **{ 'sound': start_notify_sound }) %}
+    {% if notification_sound != [] %}
+      {% set push.data = dict(push.data, **{ 'sound': notification_sound }) %}
     {% endif %}
     {% if push.data %}
       {% set message.data = dict(message.data, **{ 'push': push.data }) %}
     {% endif %}
-    {% if 'high_priority' in start_notify_data %}
+    {% if 'high_priority' in notification_data %}
       {% set message.data = dict(message.data, **{ 'ttl': 0, 'priority': 'high' }) %}
     {% endif %}
-    {% if 'channel' in start_notify_data %}
-      {% set message.data = dict(message.data, **{ 'channel': start_notify_channel }) %}
+    {% if 'channel' in notification_data %}
+      {% set message.data = dict(message.data, **{ 'channel': notification_channel }) %}
     {% endif %}
-    {% if 'sticky' in start_notify_data %}
+    {% if 'sticky' in notification_data %}
       {% set message.data = dict(message.data, **{ 'sticky': "true" }) %}
     {% endif %}
     {{ message.data }}
@@ -334,51 +334,51 @@ action:
         notify_zone_condition={{ notify_zone_condition }}
       level: warning
   - choose:
-    - alias: "Check if media should play"
-      conditions:
-        - condition: template
-          value_template: "{{ enable_music }}"  # Check if music playback is enabled
-        - condition: template
-          value_template: "{{ media_zone_condition == 'always' or (media_zone_condition == 'in' and someone_in_zone) or (media_zone_condition == 'out' and not someone_in_zone) }}"
-      sequence:
-        - service: media_player.play_media
-          data:
-            media_content_id: "{{ media_url }}"
-            media_content_type: music
-          target: !input media_players
+      - alias: "Check if media should play"
+        conditions:
+          - condition: template
+            value_template: "{{ enable_music }}" # Check if music playback is enabled
+          - condition: template
+            value_template: "{{ media_zone_condition == 'always' or (media_zone_condition == 'in' and someone_in_zone) or (media_zone_condition == 'out' and not someone_in_zone) }}"
+        sequence:
+          - service: media_player.play_media
+            data:
+              media_content_id: "{{ media_url }}"
+              media_content_type: music
+            target: !input media_players
 
   - choose:
-    - alias: "Check if notification should be sent"
-      conditions:
-        - condition: template
-          value_template: "{{ enable_notification }}"  # Check if notification is enabled
-        - condition: template
-          value_template: "{{ notify_zone_condition == 'always' or (notify_zone_condition == 'in' and someone_in_zone) or (notify_zone_condition == 'out' and not someone_in_zone) }}"
-      sequence:
-        - alias: Send a notification to each device
-          repeat:
-            for_each: !input notify_target
-            sequence:
-              - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
-                data:
-                  message: "{{ notification_message }}"
-                  title: "{{ notification_title }}"
+      - alias: "Check if notification should be sent"
+        conditions:
+          - condition: template
+            value_template: "{{ enable_notification }}" # Check if notification is enabled
+          - condition: template
+            value_template: "{{ notify_zone_condition == 'always' or (notify_zone_condition == 'in' and someone_in_zone) or (notify_zone_condition == 'out' and not someone_in_zone) }}"
+        sequence:
+          - alias: Send a notification to each device
+            repeat:
+              for_each: !input notify_target
+              sequence:
+                - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
                   data:
-                    push:
-                      category: "doorbell"
-                    zone_name: "{{ zone_name }}"
-          data:
+                    message: "{{ notification_message }}"
+                    title: "{{ notification_title }}"
+                    data:
+                      push:
+                        category: "doorbell"
+                      zone_name: "{{ zone_name }}"
+            data:
               title: "{{ notification_title }}"
               message: "{{ notification_message }}"
-              data: "{{ start_message_data }}"
+              data: "{{ notification_msg_data }}"
   - choose:
       - alias: "Check if custom actions should run"
         conditions:
           - condition: template
-            value_template: "{{ enable_custom_actions }}"  # Check if custom actions are enabled
+            value_template: "{{ enable_custom_actions }}" # Check if custom actions are enabled
           - condition: template
             value_template: >
               {{ custom_actions_presence_condition == 'always' or
                  (custom_actions_presence_condition == 'in' and someone_in_zone) or
                  (custom_actions_presence_condition == 'out' and not someone_in_zone) }}
-        sequence: !input custom_actions  # Execute the custom actions
+        sequence: !input custom_actions # Execute the custom actions

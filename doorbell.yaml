@@ -22,7 +22,6 @@ blueprint:
       input:
         button_device:
           name: Doorbell Button (MQTT)
-          icon: mdi:zigbee
           description: Select the Zigbee2MQTT button to trigger the doorbell.
           selector:
             device:
@@ -30,7 +29,6 @@ blueprint:
                 - integration: mqtt
         zone_entity:
           name: Presence Zone
-          icon: mdi:home
           description: Zone entity to check for presence (e.g., zone.home).
           selector:
             entity:
@@ -43,14 +41,12 @@ blueprint:
       input:
         enable_music:
           name: Enable Music Playback
-          icon: mdi:toggle-switch
           description: Enable or disable playing music when the doorbell is triggered.
           default: true
           selector:
             boolean: {}
         media_zone_condition:
           name: When to play media
-          icon: mdi:home
           description: Choose when to play media based on zone presence.
           default: always
           selector:
@@ -83,14 +79,12 @@ blueprint:
       input:
         enable_notification:
           name: Enable Notifications
-          icon: mdi:toggle-switch
           description: Optionally notify a mobile device.
           default: false
           selector:
             boolean: {}
         notify_zone_condition:
           name: When to send notification
-          icon: mdi:home
           description: Choose when to send the notification based on zone presence.
           default: always
           selector:
@@ -104,7 +98,6 @@ blueprint:
                   value: out
         notify_target:
           name: Notification Target
-          icon: mdi:bell
           description: Mobile app notify target (e.g. notify.mobile_app_xyz)
           default: []
           selector:

@@ -14,7 +14,8 @@ blueprint:
 
     You can customize the behavior based on whether anyone is home or not.
 
-    ## :music: Doorbell Sounds that you can use (or use your own)
+    ## 🎵 Doorbell Sounds that you can use (or use your own)
+
     - https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/doorbell.mp3
     - https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/halloween.mp3
     - https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/christmas.mp3

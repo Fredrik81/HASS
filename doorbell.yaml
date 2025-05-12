@@ -109,24 +109,35 @@ triggers:
 condition: []
 
 action:
+  - service: system_log.write
+    data:
+      message: >
+        media_zone_condition={{ media_zone_condition }},
+        someone_in_zone={{ someone_in_zone }},
+        send_notification={{ send_notification }},
+        notify_zone_condition={{ notify_zone_condition }}
+      level: warning
   - choose:
-      - conditions:
-          - condition: template
-            value_template: "{{ media_zone_condition == 'always' or (media_zone_condition == 'in' and someone_in_zone) or (media_zone_condition == 'out' and not someone_in_zone) }}"
-        sequence:
-          - service: media_player.play_media
-            data:
-              media_content_id: media_url
-              media_content_type: audio/mpeg
-            target: !input media_players
+    - alias: "Check if media should play"
+      conditions:
+        - condition: template
+          value_template: "{{ media_zone_condition == 'always' or (media_zone_condition == 'in' and someone_in_zone) or (media_zone_condition == 'out' and not someone_in_zone) }}"
+      sequence:
+        - service: media_player.play_media
+          data:
+            media_content_id: "{{ media_url }}"
+            media_content_type: music
+          target: !input media_players
 
   - choose:
-      - conditions:
-          - condition: template
-            value_template: "{{ iif(is_boolean(input.send_notification), input.send_notification, false) }}"
-          - condition: template
-            value_template: "{{ notify_zone_condition == 'always' or (notify_zone_condition == 'in' and someone_in_zone) or (notify_zone_condition == 'out' and not someone_in_zone) }}"
-        sequence:
-          - service: notify.{{ iif(input.notify_target is string, input.notify_target.split('.')[-1], 'mobile_app') }}
-            data:
-              title: Dörrklocka alarm!
+    - alias: "Check if notification should be sent"
+      conditions:
+        - condition: template
+          value_template: "{{ iif(is_boolean(input.send_notification), input.send_notification, false) }}"
+        - condition: template
+          value_template: "{{ notify_zone_condition == 'always' or (notify_zone_condition == 'in' and someone_in_zone) or (notify_zone_condition == 'out' and not someone_in_zone) }}"
+      sequence:
+        - service: notify.{{ iif(input.notify_target is string, input.notify_target.split('.')[-1], 'mobile_app') }}
+          data:
+            title: Dörrklocka alarm!
+            message: "Någon är vid dörren"

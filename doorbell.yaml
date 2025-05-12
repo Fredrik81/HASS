@@ -184,7 +184,7 @@ blueprint:
             select:
               options:
                 - label: None
-                  value: []
+                  value: ""
                 - label: Chime
                   value: chime.caf
                 - label: Bell

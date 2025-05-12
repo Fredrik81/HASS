@@ -15,75 +15,96 @@ blueprint:
   domain: automation
   source_url: https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell.yaml
   input:
-    button_device:
-      name: Doorbell Button (MQTT)
-      description: Select the Zigbee2MQTT button to trigger the doorbell.
-      selector:
-        device:
-          filter:
-            - integration: mqtt
-    zone_entity:
-      name: Presence Zone
-      description: Zone entity to check for presence (e.g., zone.home).
-      selector:
-        entity:
-          domain: zone
-      default: zone.home
-    media_zone_condition:
-      name: When to play media
-      description: Choose when to play media based on zone presence.
-      default: always
-      selector:
-        select:
-          options:
-            - label: Always
-              value: always
-            - label: Only if someone is in the zone
-              value: in
-            - label: Only if no one is in the zone
-              value: out
-    media_url:
-      name: Media File URL
-      description: URL of the media file to play (e.g., MP3).
-      default: https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/doorbell.mp3
-      selector:
-        text:
-          type: url
-    media_players:
-      name: Media Players
-      description: Select media players to play the doorbell sound.
-      selector:
-        target:
-          entity:
-            domain: media_player
-    send_notification:
-      name: Notify Phone
-      description: Optionally notify a mobile device.
-      default: false
-      selector:
-        boolean: {}
-    notify_zone_condition:
-      name: When to send notification
-      description: Choose when to send the notification based on zone presence.
-      default: always
-      selector:
-        select:
-          options:
-            - label: Always
-              value: always
-            - label: Only if someone is in the zone
-              value: in
-            - label: Only if no one is in the zone
-              value: out
-    notify_target:
-      name: Notification Target
-      description: Mobile app notify target (e.g. notify.mobile_app_xyz)
-      default: []
-      selector:
-        device:
-          filter:
-            - integration: mobile_app
-          multiple: true
+    trigger_config:
+      name: "Trigger Settings"
+      icon: mdi:zigbee
+      collapsed: false
+      input:
+        button_device:
+          name: Doorbell Button (MQTT)
+          description: Select the Zigbee2MQTT button to trigger the doorbell.
+          selector:
+            device:
+              filter:
+                - integration: mqtt
+        zone_entity:
+          name: Presence Zone
+          description: Zone entity to check for presence (e.g., zone.home).
+          selector:
+            entity:
+              domain: zone
+          default: zone.home
+    music_config:
+      name: "Music Playback Settings"
+      icon: mdi:music
+      collapsed: true
+      input:
+        enable_music:
+          name: Enable Music Playback
+          description: Enable or disable playing music when the doorbell is triggered.
+          default: true
+          selector:
+            boolean: {}
+        media_zone_condition:
+          name: When to play media
+          description: Choose when to play media based on zone presence.
+          default: always
+          selector:
+            select:
+              options:
+                - label: Always
+                  value: always
+                - label: Only if someone is in the zone
+                  value: in
+                - label: Only if no one is in the zone
+                  value: out
+        media_url:
+          name: Media File URL
+          description: URL of the media file to play (e.g., MP3).
+          default: https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/doorbell.mp3
+          selector:
+            text:
+              type: url
+        media_players:
+          name: Media Players
+          description: Select media players to play the doorbell sound.
+          selector:
+            target:
+              entity:
+                domain: media_player
+    notification_config:
+      name: "Notification Settings"
+      icon: mdi:bell
+      collapsed: true
+      input:
+        enable_notification:
+          name: Enable Notifications
+          description: Optionally notify a mobile device.
+          default: false
+          selector:
+            boolean: {}
+        notify_zone_condition:
+          name: When to send notification
+          description: Choose when to send the notification based on zone presence.
+          default: always
+          selector:
+            select:
+              options:
+                - label: Always
+                  value: always
+                - label: Only if someone is in the zone
+                  value: in
+                - label: Only if no one is in the zone
+                  value: out
+        notify_target:
+          name: Notification Target
+          description: Mobile app notify target (e.g. notify.mobile_app_xyz)
+          default: []
+          selector:
+            device:
+              filter:
+                - integration: mobile_app
+              multiple: true
 
 variables:
   zone: !input zone_entity
@@ -92,12 +113,13 @@ variables:
     {{ expand(states.person) | selectattr('state', 'defined') |
        map(attribute='state') | map('lower') |
        select('equalto', zone_name) | list | count > 0 }}
-  media_condition: !input media_zone_condition
-  notify_condition: !input notify_zone_condition
-  send_notification: !input send_notification
+  media_zone_condition: !input media_zone_condition
+  notify_zone_condition: !input notify_zone_condition
+  enable_notification: !input enable_notification
   notify_target: !input notify_target
   media_url: !input media_url
   media_players: !input media_players
+  enable_music: !input enable_music
 
 triggers:
   - platform: device
@@ -114,12 +136,14 @@ action:
       message: >
         media_zone_condition={{ media_zone_condition }},
         someone_in_zone={{ someone_in_zone }},
-        send_notification={{ send_notification }},
+        enable_notification={{ enable_notification }},
         notify_zone_condition={{ notify_zone_condition }}
       level: warning
   - choose:
     - alias: "Check if media should play"
       conditions:
+        - condition: template
+          value_template: "{{ enable_music }}"  # Check if music playback is enabled
         - condition: template
           value_template: "{{ media_zone_condition == 'always' or (media_zone_condition == 'in' and someone_in_zone) or (media_zone_condition == 'out' and not someone_in_zone) }}"
       sequence:
@@ -133,7 +157,7 @@ action:
     - alias: "Check if notification should be sent"
       conditions:
         - condition: template
-          value_template: "{{ iif(is_boolean(input.send_notification), input.send_notification, false) }}"
+          value_template: "{{ iif(is_boolean(enable_notification), enable_notification, false) }}"
         - condition: template
           value_template: "{{ notify_zone_condition == 'always' or (notify_zone_condition == 'in' and someone_in_zone) or (notify_zone_condition == 'out' and not someone_in_zone) }}"
       sequence:

@@ -370,7 +370,7 @@ action:
             data:
               title: "{{ notification_title }}"
               message: "{{ notification_message }}"
-              data: "{{ notification_msg_data }}"
+              # data: "{{ notification_msg_data }}"
   - choose:
       - alias: "Check if custom actions should run"
         conditions:

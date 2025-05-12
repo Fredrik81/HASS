@@ -85,6 +85,44 @@ blueprint:
             target:
               entity:
                 domain: media_player
+    lights_config:
+      name: "Light Settings"
+      icon: mdi:lightbulb
+      collapsed: true
+      input:
+        enable_lights:
+          name: Enable Light Flashing
+          description: Enable or disable flashing lights when the doorbell is pressed.
+          default: false
+          selector:
+            boolean: {}
+        lights_entity:
+          name: Light Entity
+          description: Select the light entity to flash.
+          default: []
+          selector:
+            entity:
+              domain: light
+              multiple: true
+        lights_flash_times:
+          name: Number of Flashes
+          description: How many times the lights should flash.
+          default: 3
+          selector:
+            number:
+              min: 1
+              max: 10
+              step: 1
+
+        lights_flash_duration:
+          name: Flash Duration
+          description: Time (in seconds) each flash stays on/off.
+          default: 0.5
+          selector:
+            number:
+              min: 0.1
+              max: 3
+              step: 0.1
     notification_config:
       name: "Notification Settings"
       icon: mdi:bell
@@ -114,14 +152,16 @@ blueprint:
           description: Title of the notification. Defaults to "Doorbell Alert!".
           default: "Doorbell Alert!"
           selector:
-            text: {}
+            text:
+              type: text
 
         notification_message:
           name: Notification Message
           description: Message of the notification. Defaults to "Someone is at the door!".
           default: "Someone is at the door!"
           selector:
-            text: {}
+            text:
+              type: text
         notify_target:
           name: Notification Target
           description: Mobile app notify target (e.g. notify.mobile_app_xyz)
@@ -290,6 +330,12 @@ variables:
     {% endif %}
     {{ message.data }}
 
+  #Light variables
+  enable_lights: !input enable_lights
+  lights_entity: !input lights_entity
+  lights_flash_times: !input lights_flash_times
+  lights_flash_duration: !input lights_flash_duration
+
 triggers:
   - platform: device
     device_id: !input button_device
@@ -300,14 +346,6 @@ triggers:
 condition: []
 
 action:
-  - service: system_log.write
-    data:
-      message: >
-        media_zone_condition={{ media_zone_condition }},
-        someone_in_zone={{ someone_in_zone }},
-        enable_notification={{ enable_notification }},
-        notify_zone_condition={{ notify_zone_condition }}
-      level: warning
   - choose:
       - alias: "Check if media should play"
         conditions:
@@ -321,7 +359,33 @@ action:
               media_content_id: "{{ media_url }}"
               media_content_type: music
             target: !input media_players
-
+  - choose:
+      - alias: "Check if lights should flash"
+        conditions:
+          - condition: template
+            value_template: "{{ enable_lights }}" # Check if light flashing is enabled
+        sequence:
+          - alias: Save Current Light State
+            service: scene.create
+            data:
+              scene_id: doorbell_flash_restore
+              snapshot_entities: lights_entity
+          - alias: Flash Lights
+            repeat:
+              count: lights_flash_times
+              sequence:
+                - service: light.turn_on
+                  target: lights_entity
+                - delay:
+                    seconds: lights_flash_duration
+                - service: light.turn_off
+                  target: lights_entity
+                - delay:
+                    seconds: lights_flash_duration
+          - alias: Restore Light State
+            service: scene.turn_on
+            target:
+              entity_id: scene.doorbell_flash_restore
   - choose:
       - alias: "Check if notification should be sent"
         conditions:

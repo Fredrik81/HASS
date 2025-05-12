@@ -360,17 +360,13 @@ action:
               for_each: !input notify_target
               sequence:
                 - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                  #data:
+                  #  message: "{{ notification_message }}"
+                  #  title: "{{ notification_title }}"
                   data:
-                    message: "{{ notification_message }}"
                     title: "{{ notification_title }}"
-                    data:
-                      push:
-                        category: "doorbell"
-                      zone_name: "{{ zone_name }}"
-            data:
-              title: "{{ notification_title }}"
-              message: "{{ notification_message }}"
-              # data: "{{ notification_msg_data }}"
+                    message: "{{ notification_message }}"
+                    # data: "{{ notification_msg_data }}"
   - choose:
       - alias: "Check if custom actions should run"
         conditions:

@@ -179,20 +179,21 @@ blueprint:
           name: Notification Sound - iOS Only
           description: >
             Sounds are from built-in iOS sounds.
-          default: []
+          default: ''
           selector:
             select:
+              mode: dropdown
               options:
-                - label: None
-                  value: ""
-                - label: Chime
-                  value: chime.caf
-                - label: Bell
-                  value: bell.caf
-                - label: Electronic
-                  value: electronic.caf
-                - label: Callback
-                  value: callback.caf
+              - label: Default
+                value: ''
+              - label: Doorbell
+                value: Doorbell.caf
+              - label: News Flash
+                value: News_Flash.caf
+              - label: Choo Choo
+                value: Choo_Choo.caf
+              - label: Nano
+                value: NanoAlert5.caf
         notification_data:
           name: Android Only Options (Optional)
           description: >
@@ -295,13 +296,9 @@ variables:
     {% if notification_interruption_level in ['active', 'critical', 'time-sensitive', 'passive'] %}
       {% set push.data = dict(push.data, **{ 'interruption-level': notification_interruption_level }) %}
     {% endif %}
-    {% if notification_sound != [] %}
+    {% if notification_sound != '' %}
       {% set push.data = dict(push.data, **{
-        'sound': {
-          'name': notification_sound,
-          'critical': 1,
-          'volume': 1.0
-        }
+        'sound': { 'name': notification_sound }
       }) %}
     {% endif %}
     {% if push.data %}

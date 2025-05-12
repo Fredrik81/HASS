@@ -18,15 +18,6 @@ blueprint:
     |Time Sensitive Notification | Yes - Must be enabled in focus | No|
     |Quiet notifications without waking screen | No | No|
 
-    ### Notification Sound
-    The Home Assistant app for iOS includes built-in notification sounds and allows importing custom sounds. Here's how to manage your notification sounds:
-
-    :warning: **Note:** In the blueprint, always use the full filename (including the extension) in the **Notification Sound - iOS Only** input as shown below. If left blank, the default notification sound will be used according to your device's settings.
-
-    The Home Assistant app for iOS includes built-in notification sounds, and you can import sounds from your iOS device into the app. Custom sounds can also be added via iTunes or from your cloud storage.
-
-    :warning: **Note:** In the blueprint, make sure to enter the full filename (including the file extension) in the **Notification Sound (iOS Only)** input, as shown below. If left blank, your device will play the default notification sound based on its settings.
-
 
     * **Built-in Notification Sounds:**
 
@@ -187,15 +178,19 @@ blueprint:
         notification_sound:
           name: Notification Sound - iOS Only
           description: >
-            The Home Assistant app for iOS includes built-in notification sounds, and you can import sounds from your iOS device into the app.
-            Custom sounds can also be added via iTunes or from your cloud storage.
-            When entering a sound, ensure you use the full filename, including the extension.
-
-
-            For more information on using sounds in the Home Assistant app, [Click Here](https://community.home-assistant.io/t/650166/278)
+            Sounds are from built-in iOS sounds.
           default: []
           selector:
-            text:
+            select:
+              options:
+                - label: Chime
+                  value: chime.caf
+                - label: Bell
+                  value: bell.caf
+                - label: Electronic
+                  value: electronic.caf
+                - label: Callback
+                  value: callback.caf
         notification_data:
           name: Android Only Options (Optional)
           description: >
@@ -360,13 +355,10 @@ action:
               for_each: !input notify_target
               sequence:
                 - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
-                  #data:
-                  #  message: "{{ notification_message }}"
-                  #  title: "{{ notification_title }}"
                   data:
                     title: "{{ notification_title }}"
                     message: "{{ notification_message }}"
-                    # data: "{{ notification_msg_data }}"
+                    data: "{{ notification_msg_data }}"
   - choose:
       - alias: "Check if custom actions should run"
         conditions:

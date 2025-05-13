@@ -92,26 +92,39 @@ blueprint:
             entity:
               domain: media_player
               multiple: true
-    lights_config:
+    light_config:
       name: "Light Settings"
       icon: mdi:lightbulb
       collapsed: true
       input:
-        enable_lights:
+        light_enable:
           name: Enable Light Flashing
           description: Enable or disable flashing lights when the doorbell is pressed.
           default: false
           selector:
             boolean: {}
-        lights_entity:
-          name: Light Entity
-          description: Select the light entity to flash.
+        light_zone_condition:
+          name: When to flash lights
+          description: Choose when to flash lights based on zone presence.
+          default: always
+          selector:
+            select:
+              options:
+                - label: Always
+                  value: always
+                - label: Only if someone is in the zone
+                  value: in
+                - label: Only if no one is in the zone
+                  value: out
+        light_entities:
+          name: Light Entities
+          description: Select the light entities to flash.
           default: []
           selector:
             entity:
               domain: light
               multiple: true
-        lights_flash_times:
+        light_flash_times:
           name: Number of Flashes
           description: How many times the lights should flash.
           default: 3
@@ -120,8 +133,7 @@ blueprint:
               min: 1
               max: 10
               step: 1
-
-        lights_flash_duration:
+        light_flash_duration:
           name: Flash Duration
           description: Time (in seconds) each flash stays on/off.
           default: 0.5
@@ -135,13 +147,13 @@ blueprint:
       icon: mdi:bell
       collapsed: true
       input:
-        enable_notification:
+        notification_enable:
           name: Enable Notifications
           description: Optionally notify a mobile device.
           default: false
           selector:
             boolean: {}
-        notify_zone_condition:
+        notification_zone_condition:
           name: When to send notification
           description: Choose when to send the notification based on zone presence.
           default: always
@@ -161,7 +173,6 @@ blueprint:
           selector:
             text:
               type: text
-
         notification_message:
           name: Notification Message
           description: Message of the notification. Defaults to "Someone is at the door!".
@@ -169,9 +180,9 @@ blueprint:
           selector:
             text:
               type: text
-        notify_target:
-          name: Notification Target
-          description: Mobile app notify target (e.g. notify.mobile_app_xyz)
+        notification_targets:
+          name: Notification Targets
+          description: Mobile app notify targets (e.g., notify.mobile_app_xyz).
           default: []
           selector:
             device:
@@ -222,11 +233,9 @@ blueprint:
             **High Priority** notifications ensure that you receive important alerts immediately.
             These notifications bypass normal delivery delays and are delivered instantly to your device.
 
+            **Sticky Notification** ensures that important alerts are not dismissed when selected. They remain on your notification screen until you actively clear or swipe them away, ensuring that critical information stays visible until addressed.
 
-            **Sticky Notification** ensure that important alerts are not dismissed when selected. They remain on your notification screen until you actively clear or swipe them away, ensuring that critical information stays visible until addressed.
-
-
-            **Notification Channel** allow you to easily organize different notification settings,
+            **Notification Channel** allows you to easily organize different notification settings,
             including notification sounds, vibrations, and other device-specific features.
             If you choose this option, please enter your desired channel name below.
           default: []
@@ -290,6 +299,7 @@ variables:
   # ------------------------------
   zone: !input zone_entity
   zone_name: "{{ state_attr(zone, 'friendly_name') | lower }}"
+
   someone_in_zone: >
     {{ expand(states.person) | selectattr('state', 'equalto', zone_name) | list | count > 0 }}
 
@@ -304,17 +314,18 @@ variables:
   # ------------------------------
   # Light Variables
   # ------------------------------
-  enable_lights: !input enable_lights
-  lights_entity: !input lights_entity
-  lights_flash_times: !input lights_flash_times
-  lights_flash_duration: !input lights_flash_duration
+  light_enable: !input light_enable
+  light_entities: !input light_entities
+  light_flash_times: !input light_flash_times
+  light_flash_duration: !input light_flash_duration
+  light_zone_condition: !input light_zone_condition
 
   # ------------------------------
   # Notification Variables
   # ------------------------------
-  notify_zone_condition: !input notify_zone_condition
-  enable_notification: !input enable_notification
-  notify_target: !input notify_target
+  notification_zone_condition: !input notification_zone_condition
+  notification_enable: !input notification_enable
+  notification_targets: !input notification_targets
   notification_interruption_level: !input notification_interruption_level
   notification_sound: !input notification_sound
   notification_data: !input notification_data
@@ -377,33 +388,37 @@ action:
             data:
               media_content_id: "{{ media_url }}"
               media_content_type: music
-            target: 
+            target:
               entity_id: !input media_players
   - choose:
       - alias: "Check if lights should flash"
         conditions:
           - condition: template
-            value_template: "{{ enable_lights }}" # Check if light flashing is enabled
+            value_template: "{{ light_enable }}" # Check if light flashing is enabled
+          - condition: template
+            value_template: "{{ light_zone_condition == 'always' or (light_zone_condition == 'in' and someone_in_zone) or (light_zone_condition == 'out' and not someone_in_zone) }}"
+          - condition: template
+            value_template: "{{ light_entities | length > 0 }}" # Ensure at least one light entity is selected
         sequence:
           - alias: Save Current Light State
             service: scene.create
             data:
               scene_id: doorbell_flash_restore
-              snapshot_entities: !input lights_entity
+              snapshot_entities: !input light_entities
           - alias: Flash Lights
             repeat:
-              count: "{{ lights_flash_times | int }}"  # Ensure the count is an integer
+              count: "{{ light_flash_times | int }}"  # Ensure the count is an integer
               sequence:
                 - service: light.turn_on
                   target:
-                    entity_id: !input lights_entity  # Wrap lights_entity in a dictionary
+                    entity_id: !input light_entities
                 - delay:
-                    seconds: "{{ lights_flash_duration | float }}"  # Ensure the duration is a float
+                    seconds: "{{ light_flash_duration | float }}"  # Ensure the duration is a float
                 - service: light.turn_off
                   target:
-                    entity_id: !input lights_entity  # Wrap lights_entity in a dictionary
+                    entity_id: !input light_entities
                 - delay:
-                    seconds: "{{ lights_flash_duration | float }}"  # Ensure the duration is a float
+                    seconds: "{{ light_flash_duration | float }}"  # Ensure the duration is a float
           - alias: Restore Light State
             service: scene.turn_on
             target:
@@ -412,13 +427,15 @@ action:
       - alias: "Check if notification should be sent"
         conditions:
           - condition: template
-            value_template: "{{ enable_notification }}" # Check if notification is enabled
+            value_template: "{{ notification_enable }}" # Check if notification is enabled
           - condition: template
-            value_template: "{{ notify_zone_condition == 'always' or (notify_zone_condition == 'in' and someone_in_zone) or (notify_zone_condition == 'out' and not someone_in_zone) }}"
+            value_template: "{{ notification_zone_condition == 'always' or (notification_zone_condition == 'in' and someone_in_zone) or (notification_zone_condition == 'out' and not someone_in_zone) }}"
+          - condition: template
+            value_template: "{{ notification_targets | length > 0 }}" # Ensure at least one media player is selected
         sequence:
           - alias: Send a notification to each device
             repeat:
-              for_each: !input notify_target
+              for_each: !input notification_targets
               sequence:
                 - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
                   data:

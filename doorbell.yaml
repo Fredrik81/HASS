@@ -8,14 +8,17 @@ blueprint:
 
     - Zigbee2MQTT/MQTT Button
 
-    - ZHA Button (comming soon)
+    - ZHA Button (coming soon)
 
     ## Description
     This blueprint is designed to work with a Zigbee button that can be used as a doorbell.
-    This blueprint allows you to set up a doorbell automation that can flash lights,
-    play sounds, send notifications, and execute custom actions when a doorbell is pressed.
-    You can customize the behavior based on whether anyone is home or not.
+    It allows you to set up a doorbell automation that can flash lights, play sounds, send notifications, 
+    and execute custom actions when a doorbell is pressed. You can customize the behavior based on whether 
+    anyone is home or not.
 
+    ## Accessibility
+    This automation is especially helpful for deaf or hard-of-hearing individuals by providing a visual alert 
+    through flashing lights 💡 when the doorbell is pressed.
 
     ## 🎵 Doorbell Sounds that you can use (or use your own)
 
@@ -27,8 +30,7 @@ blueprint:
 
     - https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/christmas2.mp3
 
-
-    This automation som of the notification code from: https://community.home-assistant.io/t/650166
+    This automation uses some of the notification code from: https://community.home-assistant.io/t/650166
 
     [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M4M4ZS0Y)
   domain: automation
@@ -58,7 +60,7 @@ blueprint:
       icon: mdi:music
       collapsed: true
       input:
-        enable_music:
+        media_enable:
           name: Enable Music Playback
           description: Enable or disable playing music when the doorbell is triggered.
           default: true
@@ -77,16 +79,10 @@ blueprint:
                   value: in
                 - label: Only if no one is in the zone
                   value: out
-        media_url:
-          name: Media File URL
-          description: URL of the media file to play (e.g., MP3).
-          default: https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/doorbell.mp3
-          selector:
-            text:
-              type: url
-        media_players:
-          name: Media Players
+        media_entities:
+          name: Media Entities
           description: Select media players to play the doorbell sound.
+          default: []
           selector:
             target:
               entity:
@@ -96,21 +92,21 @@ blueprint:
       icon: mdi:lightbulb
       collapsed: true
       input:
-        enable_lights:
+        light_enable:
           name: Enable Light Flashing
           description: Enable or disable flashing lights when the doorbell is pressed.
           default: false
           selector:
             boolean: {}
-        lights_entity:
-          name: Light Entity
-          description: Select the light entity to flash.
+        light_entities:
+          name: Light Entities
+          description: Select the light entities to flash.
           default: []
           selector:
             entity:
               domain: light
               multiple: true
-        lights_flash_times:
+        light_flash_times:
           name: Number of Flashes
           description: How many times the lights should flash.
           default: 3
@@ -119,8 +115,7 @@ blueprint:
               min: 1
               max: 10
               step: 1
-
-        lights_flash_duration:
+        light_flash_duration:
           name: Flash Duration
           description: Time (in seconds) each flash stays on/off.
           default: 0.5
@@ -134,13 +129,13 @@ blueprint:
       icon: mdi:bell
       collapsed: true
       input:
-        enable_notification:
+        notification_enable:
           name: Enable Notifications
           description: Optionally notify a mobile device.
           default: false
           selector:
             boolean: {}
-        notify_zone_condition:
+        notification_zone_condition:
           name: When to send notification
           description: Choose when to send the notification based on zone presence.
           default: always
@@ -153,6 +148,15 @@ blueprint:
                   value: in
                 - label: Only if no one is in the zone
                   value: out
+        notification_targets:
+          name: Notification Targets
+          description: Mobile app notify targets (e.g., notify.mobile_app_xyz).
+          default: []
+          selector:
+            device:
+              filter:
+                - integration: mobile_app
+              multiple: true
         notification_title:
           name: Notification Title
           description: Title of the notification. Defaults to "Doorbell Alert!".
@@ -168,15 +172,6 @@ blueprint:
           selector:
             text:
               type: text
-        notify_target:
-          name: Notification Target
-          description: Mobile app notify target (e.g. notify.mobile_app_xyz)
-          default: []
-          selector:
-            device:
-              filter:
-                - integration: mobile_app
-              multiple: true
         notification_interruption_level:
           name: Interruption Level - iOS Only
           description: >
@@ -257,7 +252,7 @@ blueprint:
       icon: mdi:script-text
       collapsed: true
       input:
-        enable_custom_actions:
+        custom_actions_enable:
           name: Enable Custom Actions
           description: Enable or disable custom actions when the doorbell is triggered.
           default: false
@@ -287,60 +282,70 @@ blueprint:
             action: {}
 
 variables:
+  # ------------------------------
+  # Zone and Presence Variables
+  # ------------------------------
   zone: !input zone_entity
   zone_name: "{{ state_attr(zone, 'friendly_name') | lower }}"
   someone_in_zone: >
-    {{ expand(states.person) | selectattr('state', 'defined') |
-       map(attribute='state') | map('lower') |
-       select('equalto', zone_name) | list | count > 0 }}
-  media_zone_condition: !input media_zone_condition
-  notify_zone_condition: !input notify_zone_condition
-  enable_notification: !input enable_notification
-  notify_target: !input notify_target
-  media_url: !input media_url
-  media_players: !input media_players
-  enable_music: !input enable_music
-  enable_custom_actions: !input enable_custom_actions
-  custom_actions_presence_condition: !input custom_actions_presence_condition
-  custom_actions: !input custom_actions
+    {{ expand(states.person) | selectattr('state', 'equalto', zone_name) | list | count > 0 }}
 
-  #Notification variables
+  # ------------------------------
+  # Media Variables
+  # ------------------------------
+  media_enable: >
+    {{ !input media_enable and (media_entities | length > 0) }}
+  media_entities: !input media_entities
+  media_zone_condition: !input media_zone_condition
+  media_url: !input media_url
+
+  # ------------------------------
+  # Light Variables
+  # ------------------------------
+  light_enable: >
+    {{ !input light_enable and (light_entities | length > 0) }}
+  light_entities: !input light_entities
+  light_flash_times: !input light_flash_times
+  light_flash_duration: !input light_flash_duration
+
+  # ------------------------------
+  # Notification Variables
+  # ------------------------------
+  notification_enable: >
+    {{ !input notification_enable and (notification_targets | length > 0) }}
+  notification_targets: !input notification_targets
+  notification_zone_condition: !input notification_zone_condition
+  notification_title: !input notification_title
+  notification_message: !input notification_message
   notification_interruption_level: !input notification_interruption_level
   notification_sound: !input notification_sound
   notification_data: !input notification_data
   notification_channel: !input notification_channel
-  notification_title: !input notification_title
-  notification_message: !input notification_message
   notification_msg_data: >-
     {% set message = namespace(data={}) %}
-    {% set push = namespace(data={}) %}
     {% if notification_interruption_level in ['active', 'critical', 'time-sensitive', 'passive'] %}
-      {% set push.data = dict(push.data, **{ 'interruption-level': notification_interruption_level }) %}
+      {% set message.data = message.data | merge({'push': {'interruption-level': notification_interruption_level}}) %}
     {% endif %}
     {% if notification_sound != '' %}
-      {% set push.data = dict(push.data, **{
-        'sound': { 'name': notification_sound }
-      }) %}
-    {% endif %}
-    {% if push.data %}
-      {% set message.data = dict(message.data, **{ 'push': push.data }) %}
+      {% set message.data = message.data | merge({'push': {'sound': {'name': notification_sound}}}) %}
     {% endif %}
     {% if 'high_priority' in notification_data %}
-      {% set message.data = dict(message.data, **{ 'ttl': 0, 'priority': 'high' }) %}
+      {% set message.data = message.data | merge({'ttl': 0, 'priority': 'high'}) %}
     {% endif %}
     {% if 'channel' in notification_data %}
-      {% set message.data = dict(message.data, **{ 'channel': notification_channel }) %}
+      {% set message.data = message.data | merge({'channel': notification_channel}) %}
     {% endif %}
     {% if 'sticky' in notification_data %}
-      {% set message.data = dict(message.data, **{ 'sticky': "true" }) %}
+      {% set message.data = message.data | merge({'sticky': "true"}) %}
     {% endif %}
     {{ message.data }}
 
-  #Light variables
-  enable_lights: !input enable_lights
-  lights_entity: !input lights_entity
-  lights_flash_times: !input lights_flash_times
-  lights_flash_duration: !input lights_flash_duration
+  # ------------------------------
+  # Custom Actions Variables
+  # ------------------------------
+  custom_actions_enable: !input custom_actions_enable
+  custom_actions_presence_condition: !input custom_actions_presence_condition
+  custom_actions: !input custom_actions
 
 triggers:
   - platform: device
@@ -356,7 +361,7 @@ action:
       - alias: "Check if media should play"
         conditions:
           - condition: template
-            value_template: "{{ enable_music }}" # Check if music playback is enabled
+            value_template: "{{ media_enable }}" # Check if music playback is enabled
           - condition: template
             value_template: "{{ media_zone_condition == 'always' or (media_zone_condition == 'in' and someone_in_zone) or (media_zone_condition == 'out' and not someone_in_zone) }}"
         sequence:
@@ -364,30 +369,42 @@ action:
             data:
               media_content_id: "{{ media_url }}"
               media_content_type: music
-            target: !input media_players
+            target: !input media_entities
   - choose:
       - alias: "Check if lights should flash"
         conditions:
           - condition: template
-            value_template: "{{ enable_lights }}" # Check if light flashing is enabled
+            value_template: "{{ light_enable }}" # Check if light flashing is enabled
         sequence:
           - alias: Save Current Light State
             service: scene.create
             data:
               scene_id: doorbell_flash_restore
-              snapshot_entities: lights_entity
+              snapshot_entities: !input light_entities
           - alias: Flash Lights
             repeat:
-              count: "{{ lights_flash_times | int }}"  # Ensure the count is an integer
+              count: "{{ light_flash_times | int }}"  # Ensure the count is an integer
               sequence:
                 - service: light.turn_on
-                  target: lights_entity
+                  target:
+                    entity_id: !input light_entities
                 - delay:
-                    seconds: "{{ lights_flash_duration | float }}"  # Ensure the duration is a float
+                    seconds: "{{ light_flash_duration | float }}"
                 - service: light.turn_off
-                  target: lights_entity
+                  target:
+                    entity_id: !input light_entities
                 - delay:
-                    seconds: "{{ lights_flash_duration | float }}"  # Ensure the duration is a float
+                    seconds: "{{ light_flash_duration | float }}"
+                - service: light.turn_on
+                  target:
+                    entity_id: !input light_entities
+                - delay:
+                    seconds: "{{ light_flash_duration | float }}"
+                - service: light.turn_off
+                  target:
+                    entity_id: !input light_entities
+                - delay:
+                    seconds: "{{ light_flash_duration | float }}"
           - alias: Restore Light State
             service: scene.turn_on
             target:
@@ -396,13 +413,13 @@ action:
       - alias: "Check if notification should be sent"
         conditions:
           - condition: template
-            value_template: "{{ enable_notification }}" # Check if notification is enabled
+            value_template: "{{ notification_enable }}" # Check if notification is enabled
           - condition: template
-            value_template: "{{ notify_zone_condition == 'always' or (notify_zone_condition == 'in' and someone_in_zone) or (notify_zone_condition == 'out' and not someone_in_zone) }}"
+            value_template: "{{ notification_zone_condition == 'always' or (notification_zone_condition == 'in' and someone_in_zone) or (notification_zone_condition == 'out' and not someone_in_zone) }}"
         sequence:
           - alias: Send a notification to each device
             repeat:
-              for_each: !input notify_target
+              for_each: !input notification_targets
               sequence:
                 - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
                   data:
@@ -413,7 +430,7 @@ action:
       - alias: "Check if custom actions should run"
         conditions:
           - condition: template
-            value_template: "{{ enable_custom_actions }}" # Check if custom actions are enabled
+            value_template: "{{ custom_actions_enable }}" # Check if custom actions are enabled
           - condition: template
             value_template: >
               {{ custom_actions_presence_condition == 'always' or

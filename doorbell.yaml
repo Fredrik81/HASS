@@ -87,10 +87,11 @@ blueprint:
         media_players:
           name: Media Players
           description: Select media players to play the doorbell sound.
+          default: []
           selector:
-            target:
-              entity:
-                domain: media_player
+            entity:
+              domain: media_player
+              multiple: true
     lights_config:
       name: "Light Settings"
       icon: mdi:lightbulb
@@ -228,9 +229,6 @@ blueprint:
             **Notification Channel** allow you to easily organize different notification settings,
             including notification sounds, vibrations, and other device-specific features.
             If you choose this option, please enter your desired channel name below.
-
-
-            For more information on notification options [Click Here](https://community.home-assistant.io/t/650166/278)
           default: []
           selector:
             select:
@@ -366,7 +364,8 @@ action:
             data:
               media_content_id: "{{ media_url }}"
               media_content_type: music
-            target: !input media_players
+            target: 
+              entity_id: !input media_players
   - choose:
       - alias: "Check if lights should flash"
         conditions:

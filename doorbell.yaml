@@ -1,28 +1,34 @@
 blueprint:
-  name: Doorbell Automation
+  name: Doorbell Automation (Zigbee button)
   description: >
     # 🔔 Doorbell Automation
     **Version: 1.0**
 
     ## Supported Platforms
+
     - Zigbee2MQTT/MQTT Button
+
     - ZHA Button (comming soon)
 
+    ## Description
+    This blueprint is designed to work with a Zigbee button that can be used as a doorbell.
     This blueprint allows you to set up a doorbell automation that can flash lights,
-
     play sounds, send notifications, and execute custom actions when a doorbell is pressed.
-
     You can customize the behavior based on whether anyone is home or not.
+
 
     ## 🎵 Doorbell Sounds that you can use (or use your own)
 
     - https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/doorbell.mp3
+
     - https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/halloween.mp3
+
     - https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/christmas.mp3
+
     - https://raw.githubusercontent.com/Fredrik81/HASS/refs/heads/main/doorbell/christmas2.mp3
 
 
-    This automation uses code from: https://community.home-assistant.io/t/650166
+    This automation som of the notification code from: https://community.home-assistant.io/t/650166
 
     [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M4M4ZS0Y)
   domain: automation
@@ -372,16 +378,16 @@ action:
               snapshot_entities: lights_entity
           - alias: Flash Lights
             repeat:
-              count: lights_flash_times
+              count: "{{ lights_flash_times | int }}"  # Ensure the count is an integer
               sequence:
                 - service: light.turn_on
                   target: lights_entity
                 - delay:
-                    seconds: lights_flash_duration
+                    seconds: "{{ lights_flash_duration | float }}"  # Ensure the duration is a float
                 - service: light.turn_off
                   target: lights_entity
                 - delay:
-                    seconds: lights_flash_duration
+                    seconds: "{{ lights_flash_duration | float }}"  # Ensure the duration is a float
           - alias: Restore Light State
             service: scene.turn_on
             target:

@@ -53,14 +53,14 @@ blueprint:
             entity:
               domain: zone
           default: zone.home
-    music_config:
-      name: "Music Playback Settings"
+    media_config:
+      name: "Media Playback Settings"
       icon: mdi:music
       collapsed: true
       input:
-        enable_music:
-          name: Enable Music Playback
-          description: Enable or disable playing music when the doorbell is triggered.
+        media_enable:
+          name: Enable Media Playback
+          description: Enable or disable playing media when the doorbell is triggered.
           default: true
           selector:
             boolean: {}
@@ -285,18 +285,33 @@ blueprint:
             action: {}
 
 variables:
+  # ------------------------------
+  # Zone and Presence Variables
+  # ------------------------------
   zone: !input zone_entity
   zone_name: "{{ state_attr(zone, 'friendly_name') | lower }}"
   someone_in_zone: >
     {{ expand(states.person) | selectattr('state', 'equalto', zone_name) | list | count > 0 }}
 
-  # Media variables
+  # ------------------------------
+  # Media Variables
+  # ------------------------------
   media_zone_condition: !input media_zone_condition
   media_url: !input media_url
   media_players: !input media_players
-  enable_music: !input enable_music
+  media_enable: !input media_enable
 
-  #Notification variables
+  # ------------------------------
+  # Light Variables
+  # ------------------------------
+  enable_lights: !input enable_lights
+  lights_entity: !input lights_entity
+  lights_flash_times: !input lights_flash_times
+  lights_flash_duration: !input lights_flash_duration
+
+  # ------------------------------
+  # Notification Variables
+  # ------------------------------
   notify_zone_condition: !input notify_zone_condition
   enable_notification: !input enable_notification
   notify_target: !input notify_target
@@ -331,13 +346,9 @@ variables:
     {% endif %}
     {{ message.data }}
 
-  #Light variables
-  enable_lights: !input enable_lights
-  lights_entity: !input lights_entity
-  lights_flash_times: !input lights_flash_times
-  lights_flash_duration: !input lights_flash_duration
-
-  #Custom actions variables
+  # ------------------------------
+  # Custom Actions Variables
+  # ------------------------------
   enable_custom_actions: !input enable_custom_actions
   custom_actions_presence_condition: !input custom_actions_presence_condition
   custom_actions: !input custom_actions
@@ -356,9 +367,11 @@ action:
       - alias: "Check if media should play"
         conditions:
           - condition: template
-            value_template: "{{ enable_music }}" # Check if music playback is enabled
+            value_template: "{{ media_enable }}" # Check if media playback is enabled
           - condition: template
             value_template: "{{ media_zone_condition == 'always' or (media_zone_condition == 'in' and someone_in_zone) or (media_zone_condition == 'out' and not someone_in_zone) }}"
+          - condition: template
+            value_template: "{{ media_players | length > 0 }}" # Ensure at least one media player is selected
         sequence:
           - service: media_player.play_media
             data:

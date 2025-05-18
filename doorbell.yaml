@@ -374,82 +374,83 @@ triggers:
 condition: []
 
 action:
-  - choose:
-      - alias: "Check if media should play"
-        conditions:
-          - condition: template
-            value_template: "{{ media_enable }}" # Check if media playback is enabled
-          - condition: template
-            value_template: "{{ media_zone_condition == 'always' or (media_zone_condition == 'in' and someone_in_zone) or (media_zone_condition == 'out' and not someone_in_zone) }}"
-          - condition: template
-            value_template: "{{ media_players | length > 0 }}" # Ensure at least one media player is selected
-        sequence:
-          - service: media_player.play_media
-            data:
-              media_content_id: "{{ media_url }}"
-              media_content_type: music
-            target:
-              entity_id: !input media_players
-  - choose:
-      - alias: "Check if lights should flash"
-        conditions:
-          - condition: template
-            value_template: "{{ light_enable }}" # Check if light flashing is enabled
-          - condition: template
-            value_template: "{{ light_zone_condition == 'always' or (light_zone_condition == 'in' and someone_in_zone) or (light_zone_condition == 'out' and not someone_in_zone) }}"
-          - condition: template
-            value_template: "{{ light_entities | length > 0 }}" # Ensure at least one light entity is selected
-        sequence:
-          - alias: Save Current Light State
-            service: scene.create
-            data:
-              scene_id: doorbell_flash_restore
-              snapshot_entities: !input light_entities
-          - alias: Flash Lights
-            repeat:
-              count: "{{ light_flash_times | int }}"  # Ensure the count is an integer
-              sequence:
-                - service: light.turn_on
-                  target:
-                    entity_id: !input light_entities
-                - delay:
-                    seconds: "{{ light_flash_duration | float }}"  # Ensure the duration is a float
-                - service: light.turn_off
-                  target:
-                    entity_id: !input light_entities
-                - delay:
-                    seconds: "{{ light_flash_duration | float }}"  # Ensure the duration is a float
-          - alias: Restore Light State
-            service: scene.turn_on
-            target:
-              entity_id: scene.doorbell_flash_restore
-  - choose:
-      - alias: "Check if notification should be sent"
-        conditions:
-          - condition: template
-            value_template: "{{ notification_enable }}" # Check if notification is enabled
-          - condition: template
-            value_template: "{{ notification_zone_condition == 'always' or (notification_zone_condition == 'in' and someone_in_zone) or (notification_zone_condition == 'out' and not someone_in_zone) }}"
-          - condition: template
-            value_template: "{{ notification_targets | length > 0 }}" # Ensure at least one media player is selected
-        sequence:
-          - alias: Send a notification to each device
-            repeat:
-              for_each: !input notification_targets
-              sequence:
-                - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
-                  data:
-                    title: "{{ notification_title }}"
-                    message: "{{ notification_message }}"
-                    data: "{{ notification_msg_data }}"
-  - choose:
-      - alias: "Check if custom actions should run"
-        conditions:
-          - condition: template
-            value_template: "{{ enable_custom_actions }}" # Check if custom actions are enabled
-          - condition: template
-            value_template: >
-              {{ custom_actions_presence_condition == 'always' or
-                 (custom_actions_presence_condition == 'in' and someone_in_zone) or
-                 (custom_actions_presence_condition == 'out' and not someone_in_zone) }}
-        sequence: !input custom_actions # Execute the custom actions
+  - parallel:
+    - choose:
+        - alias: "Check if media should play"
+          conditions:
+            - condition: template
+              value_template: "{{ media_enable }}" # Check if media playback is enabled
+            - condition: template
+              value_template: "{{ media_zone_condition == 'always' or (media_zone_condition == 'in' and someone_in_zone) or (media_zone_condition == 'out' and not someone_in_zone) }}"
+            - condition: template
+              value_template: "{{ media_players | length > 0 }}" # Ensure at least one media player is selected
+          sequence:
+            - service: media_player.play_media
+              data:
+                media_content_id: "{{ media_url }}"
+                media_content_type: music
+              target:
+                entity_id: !input media_players
+    - choose:
+        - alias: "Check if lights should flash"
+          conditions:
+            - condition: template
+              value_template: "{{ light_enable }}" # Check if light flashing is enabled
+            - condition: template
+              value_template: "{{ light_zone_condition == 'always' or (light_zone_condition == 'in' and someone_in_zone) or (light_zone_condition == 'out' and not someone_in_zone) }}"
+            - condition: template
+              value_template: "{{ light_entities | length > 0 }}" # Ensure at least one light entity is selected
+          sequence:
+            - alias: Save Current Light State
+              service: scene.create
+              data:
+                scene_id: doorbell_flash_restore
+                snapshot_entities: !input light_entities
+            - alias: Flash Lights
+              repeat:
+                count: "{{ light_flash_times | int }}"  # Ensure the count is an integer
+                sequence:
+                  - service: light.turn_on
+                    target:
+                      entity_id: !input light_entities
+                  - delay:
+                      seconds: "{{ light_flash_duration | float }}"  # Ensure the duration is a float
+                  - service: light.turn_off
+                    target:
+                      entity_id: !input light_entities
+                  - delay:
+                      seconds: "{{ light_flash_duration | float }}"  # Ensure the duration is a float
+            - alias: Restore Light State
+              service: scene.turn_on
+              target:
+                entity_id: scene.doorbell_flash_restore
+    - choose:
+        - alias: "Check if notification should be sent"
+          conditions:
+            - condition: template
+              value_template: "{{ notification_enable }}" # Check if notification is enabled
+            - condition: template
+              value_template: "{{ notification_zone_condition == 'always' or (notification_zone_condition == 'in' and someone_in_zone) or (notification_zone_condition == 'out' and not someone_in_zone) }}"
+            - condition: template
+              value_template: "{{ notification_targets | length > 0 }}" # Ensure at least one media player is selected
+          sequence:
+            - alias: Send a notification to each device
+              repeat:
+                for_each: !input notification_targets
+                sequence:
+                  - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                    data:
+                      title: "{{ notification_title }}"
+                      message: "{{ notification_message }}"
+                      data: "{{ notification_msg_data }}"
+    - choose:
+        - alias: "Check if custom actions should run"
+          conditions:
+            - condition: template
+              value_template: "{{ enable_custom_actions }}" # Check if custom actions are enabled
+            - condition: template
+              value_template: >
+                {{ custom_actions_presence_condition == 'always' or
+                  (custom_actions_presence_condition == 'in' and someone_in_zone) or
+                  (custom_actions_presence_condition == 'out' and not someone_in_zone) }}
+          sequence: !input custom_actions # Execute the custom actions
